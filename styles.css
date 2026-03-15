@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 50% 5%;
+    --foreground: 260 10% 98%;
+    --primary: 266 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --border: 260 30% 20%;
+    --radius: 1rem;
+  }
+}
+
+body {
+  @apply bg-[#0a051a] text-white antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a051a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2e1065;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4c1d95;
+}
