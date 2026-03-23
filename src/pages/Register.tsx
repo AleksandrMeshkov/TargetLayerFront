@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +20,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function Register() {
+  const navigate = useNavigate();
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -27,7 +29,9 @@ export default function Register() {
   const onSubmit = async (data: FormData) => {
     console.log(data);
     await new Promise(resolve => setTimeout(resolve, 1000));
+    localStorage.setItem('tl_auth', '1');
     toast.success('Аккаунт успешно создан!');
+    navigate('/app');
   };
 
   return (
