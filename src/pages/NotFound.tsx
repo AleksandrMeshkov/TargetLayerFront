@@ -124,12 +124,12 @@ const NotFound: React.FC = () => {
 
         <div className="mt-16">
           <p className="text-sm text-gray-600">
-            © {new Date().getFullYear()} - Meku.dev
+            © {new Date().getFullYear()} - TargetLayer
           </p>
         </div>
       </div>
 
-      <div className="absolute inset-0 bg-[url(https://meku.dev/images/grain.png)] bg-cover bg-center opacity-60 mix-blend-soft-light z-20"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_60%)] opacity-60 mix-blend-soft-light z-20"></div>
 
       <div className="absolute bottom-0 left-0 right-0 z-10">
         <svg

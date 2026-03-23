@@ -32,7 +32,7 @@ export default function Home() {
               Разложи свои <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">цели</span> на атомы
             </h1>
             <p className="text-xl text-purple-200/60 mb-10 max-w-lg leading-relaxed">
-              TargetLayer использует ИИ для декомпозиции масштабных целей в понятные ежедневные шаги. Достигай большего, не теряя фокуса.
+              TargetLayer использует ИИ для декомпозиции масштабных целей в понятные шаги. Достигай большего, не теряя фокуса.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/register" className="bg-white text-[#0a051a] px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-purple-50 transition-all group">
@@ -65,10 +65,9 @@ export default function Home() {
               
               <div className="space-y-4">
                 {[
-                  "Анализ сложности задачи",
+                  "Командная декомопзиция цели",
                   "Выделение ключевых этапов",
-                  "Оценка необходимых ресурсов",
-                  "Генерация пошагового плана"
+                  "Формирование стартового плана",
                 ].map((text, i) => (
                   <motion.div
                     key={i}

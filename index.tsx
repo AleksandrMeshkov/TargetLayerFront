@@ -24,11 +24,11 @@ window.onerror = function (message, source, lineno, colno, error) {
     colno,
     stack: error?.stack,
   };
-  postToParent('error', '[Meku_Error_Caught]', errPayload);
+  postToParent('error', '[App_Error_Caught]', errPayload);
 };
 
 window.onunhandledrejection = function (event) {
-  postToParent('error', '[Meku_Error_Caught]', { reason: event.reason });
+  postToParent('error', '[App_Error_Caught]', { reason: event.reason });
 };
 
 (['log', 'warn', 'info', 'error'] as const).forEach((level) => {
