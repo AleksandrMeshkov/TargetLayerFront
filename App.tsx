@@ -38,7 +38,14 @@ const App: React.FC = () => {
       <Router>
         <main className="min-h-screen font-sans selection:bg-purple-500/30">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/"
+              element={(
+                <PublicOnlyRoute>
+                  <Home />
+                </PublicOnlyRoute>
+              )}
+            />
             <Route
               path="/login"
               element={(
