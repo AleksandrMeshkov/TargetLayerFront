@@ -11,6 +11,8 @@ import Register from './src/pages/Register.tsx';
 import NotFound from './src/pages/NotFound.tsx';
 import AppLayout from './src/components/AppLayout.tsx';
 import Dashboard from './src/pages/app/Dashboard.tsx';
+import Chat from './src/pages/app/Chat.tsx';
+import Roadmaps from './src/pages/app/Roadmaps.tsx';
 import AppNotFound from './src/pages/app/AppNotFound.tsx';
 import { isAuthenticatedSession } from './src/api/auth.ts';
 
@@ -72,6 +74,8 @@ const App: React.FC = () => {
               )}
             >
               <Route index element={<Dashboard />} />
+              <Route path="chat" element={<Chat />} />
+              <Route path="roadmaps" element={<Roadmaps />} />
               <Route path="*" element={<AppNotFound />} />
             </Route>
 
