@@ -12,9 +12,10 @@ import NotFound from './src/pages/NotFound.tsx';
 import AppLayout from './src/components/AppLayout.tsx';
 import Dashboard from './src/pages/app/Dashboard.tsx';
 import AppNotFound from './src/pages/app/AppNotFound.tsx';
+import { isAuthenticatedSession } from './src/api/auth.ts';
 
 function isAuthenticated(): boolean {
-  return localStorage.getItem('tl_auth') === '1';
+  return isAuthenticatedSession();
 }
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {

@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
+import { loginUser, setAuthSession } from '../api/auth';
 
 const schema = z.object({
   email: z.string().email('Введите корректный email'),
@@ -16,17 +17,25 @@ type FormData = z.infer<typeof schema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit = async (data: FormData) => {
-    console.log(data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    localStorage.setItem('tl_auth', '1');
-    toast.success('Успешный вход!');
-    navigate('/app');
+    try {
+      const tokens = await loginUser({
+        email: data.email,
+        password: data.password,
+      });
+      setAuthSession(tokens);
+      toast.success('Успешный вход!');
+      navigate('/app');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось выполнить вход';
+      toast.error(message);
+    }
   };
 
   return (
@@ -58,10 +67,18 @@ export default function Login() {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
             <input
               {...register('password')}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
           </div>
           {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{errors.password.message}</p>}
         </div>

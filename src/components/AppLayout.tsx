@@ -1,13 +1,21 @@
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Target, LogOut } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { clearAuthSession, logoutUser } from '../api/auth';
 
 const AppLayout: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('tl_auth');
-    navigate('/login', { replace: true });
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch {
+    } finally {
+      clearAuthSession();
+      toast.success('Вы вышли из аккаунта');
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
@@ -16,7 +24,7 @@ const AppLayout: React.FC = () => {
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/app" className="flex items-center gap-2">
             <Target className="h-6 w-6 text-purple-400" />
-            <span className="font-serif text-lg font-bold">TargetLayer App</span>
+            <span className="font-serif text-lg font-bold">TargetLayer</span>
           </Link>
 
           <button

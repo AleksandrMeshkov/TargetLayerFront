@@ -3,14 +3,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
+import { registerUser, setAuthSession } from '../api/auth';
 
 const schema = z.object({
   name: z.string().min(2, 'Введите ваше имя'),
+  surname: z.string().min(2, 'Введите фамилию'),
   email: z.string().email('Введите корректный email'),
-  password: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
+  password: z
+    .string()
+    .min(8, 'Пароль должен быть не менее 8 символов')
+    .regex(/[A-Z]/, 'Добавьте хотя бы одну заглавную букву')
+    .regex(/[a-z]/, 'Добавьте хотя бы одну строчную букву')
+    .regex(/[0-9]/, 'Добавьте хотя бы одну цифру')
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Добавьте хотя бы один спецсимвол'),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Пароли не совпадают",
@@ -19,19 +27,41 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+function buildUsername(email: string, name: string): string {
+  const localPart = email.split('@')[0] ?? '';
+  const source = localPart || name;
+  const normalized = source.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  if (normalized.length >= 3) {
+    return normalized;
+  }
+  return `user_${Date.now().toString().slice(-6)}`;
+}
+
 export default function Register() {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit = async (data: FormData) => {
-    console.log(data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    localStorage.setItem('tl_auth', '1');
-    toast.success('Аккаунт успешно создан!');
-    navigate('/app');
+    try {
+      const tokens = await registerUser({
+        username: buildUsername(data.email, data.name),
+        name: data.name,
+        surname: data.surname,
+        email: data.email,
+        password: data.password,
+      });
+      setAuthSession(tokens);
+      toast.success('Аккаунт успешно создан!');
+      navigate('/app');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось создать аккаунт';
+      toast.error(message);
+    }
   };
 
   return (
@@ -69,15 +99,37 @@ export default function Register() {
         </div>
 
         <div className="space-y-1.5">
+          <label className="text-xs font-medium text-purple-200/70 ml-1">Фамилия</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <input
+              {...register('surname')}
+              type="text"
+              placeholder="Иванов"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            />
+          </div>
+          {errors.surname && <p className="text-red-400 text-xs mt-1 ml-1">{errors.surname.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-purple-200/70 ml-1">Пароль</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
             <input
               {...register('password')}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
           </div>
           {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{errors.password.message}</p>}
         </div>
@@ -88,10 +140,18 @@ export default function Register() {
             <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
             <input
               {...register('confirmPassword')}
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((value) => !value)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            >
+              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
           </div>
           {errors.confirmPassword && <p className="text-red-400 text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
         </div>
