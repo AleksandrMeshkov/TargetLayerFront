@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Target, Brain, Zap, ChevronRight } from 'lucide-react';
+import { Brain, Zap, ChevronRight } from 'lucide-react';
 import MouseFollower from '../components/MouseFollower';
+import brainRaspberry from '../assets/brain-raspberry.svg';
 
 export default function Home() {
   return (
@@ -11,7 +12,7 @@ export default function Home() {
       
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <Target className="text-purple-500 w-8 h-8" />
+          <img src={brainRaspberry} alt="Иконка мозга" className="w-8 h-8 object-contain" />
           <span className="text-xl font-bold font-serif">TargetLayer</span>
         </div>
         <div className="flex items-center gap-6">

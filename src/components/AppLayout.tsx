@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Target, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { clearAuthSession, logoutUser } from '../api/auth';
+import brainRaspberry from '../assets/brain-raspberry.svg';
 
 const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const AppLayout: React.FC = () => {
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/app" className="flex items-center gap-2">
-            <Target className="h-6 w-6 text-purple-400" />
+            <img src={brainRaspberry} alt="Иконка мозга" className="h-6 w-6 object-contain" />
             <span className="font-serif text-lg font-bold">TargetLayer</span>
           </Link>
 

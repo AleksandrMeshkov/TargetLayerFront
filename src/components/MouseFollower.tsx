@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
+import brainRaspberry from '../assets/brain-raspberry.svg';
 
 const MouseFollower: React.FC = () => {
   const mouseX = useMotionValue(0);
@@ -39,7 +40,10 @@ const MouseFollower: React.FC = () => {
         }}
         className="absolute w-[300px] h-[300px] rounded-full bg-indigo-500/30 blur-[80px]"
       />
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1635776062127-d379bfcba9f8?q=80&w=2532&auto=format&fit=crop')] opacity-10 mix-blend-overlay bg-cover bg-center" />
+      <div
+        className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center"
+        style={{ backgroundImage: `url(${brainRaspberry})` }}
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a051a]/50 to-[#0a051a]" />
     </div>
   );

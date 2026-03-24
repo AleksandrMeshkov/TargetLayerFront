@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Sparkles } from 'lucide-react';
 import MouseFollower from './MouseFollower';
+import brainRaspberry from '../assets/brain-raspberry.svg';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -21,8 +21,8 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
         className="relative z-10 w-full max-w-md"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4 border border-purple-400/30">
-            <Target className="text-white w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/20 mb-4 border border-purple-400/30">
+            <img src={brainRaspberry} alt="Иконка мозга" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight font-serif">TargetLayer</h1>
         </div>
