@@ -24,6 +24,25 @@ export type RegisterPayload = {
   password: string;
 };
 
+export type UpdateNamePayload = {
+  name: string;
+  surname: string;
+  patronymic?: string;
+};
+
+export type UserProfile = {
+  id?: string;
+  user_id?: number;
+  name: string;
+  surname: string;
+  patronymic?: string | null;
+  email?: string;
+  avatar_url?: string | null;
+  username?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 const ACCESS_TOKEN_KEY = 'tl_access_token';
 const AUTH_FLAG_KEY = 'tl_auth';
 
@@ -81,4 +100,114 @@ export function clearAuthSession(): void {
 
 export function isAuthenticatedSession(): boolean {
   return localStorage.getItem(AUTH_FLAG_KEY) === '1' && Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
+}
+
+async function requestWithAuth<TResponse>(
+  endpoint: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+): Promise<TResponse> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) {
+    throw new Error('Токен авторизации не найден');
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Произошла ошибка при запросе к API';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as TResponse;
+}
+
+export async function getCurrentProfile(): Promise<UserProfile> {
+  return requestWithAuth<UserProfile>('/api/v1/user/me');
+}
+
+export async function updateUserProfile(file: File): Promise<UserProfile> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) {
+    throw new Error('Токен авторизации не найден');
+  }
+
+  const formData = new FormData();
+  // Пробуем разные имена поля - "avatar" более вероятнее чем "file"
+  formData.append('avatar', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Произошла ошибка при загрузке фото';
+    let details = '';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+      details = JSON.stringify(errorPayload);
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    console.error('Ошибка загрузки фото:', { status: response.status, details });
+    throw new Error(errorMessage);
+  }
+
+  const data = (await response.json()) as UserProfile;
+  console.log('Ответ от сервера при загрузке фото:', JSON.stringify(data, null, 2));
+  return data;
+}
+
+export async function updateUserName(payload: UpdateNamePayload): Promise<UserProfile> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) {
+    throw new Error('Токен авторизации не найден');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/user/name`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Произошла ошибка при обновлении ФИО';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as UserProfile;
 }

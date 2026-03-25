@@ -9,8 +9,10 @@ import { toast } from 'react-toastify';
 import { registerUser, setAuthSession } from '../api/auth';
 
 const schema = z.object({
+  username: z.string().min(3, 'Никнейм должен содержать минимум 3 символа').regex(/^[a-zA-Z0-9_]+$/, 'Никнейм может содержать только буквы, цифры и подчеркивание'),
   name: z.string().min(2, 'Введите ваше имя'),
   surname: z.string().min(2, 'Введите фамилию'),
+  patronymic: z.string().optional().or(z.literal('')),
   email: z.string().email('Введите корректный email'),
   password: z
     .string()
@@ -27,16 +29,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-function buildUsername(email: string, name: string): string {
-  const localPart = email.split('@')[0] ?? '';
-  const source = localPart || name;
-  const normalized = source.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-  if (normalized.length >= 3) {
-    return normalized;
-  }
-  return `user_${Date.now().toString().slice(-6)}`;
-}
-
 export default function Register() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
@@ -49,9 +41,10 @@ export default function Register() {
   const onSubmit = async (data: FormData) => {
     try {
       const tokens = await registerUser({
-        username: buildUsername(data.email, data.name),
+        username: data.username,
         name: data.name,
         surname: data.surname,
+        patronymic: data.patronymic && data.patronymic.trim() ? data.patronymic : undefined,
         email: data.email,
         password: data.password,
       });
@@ -71,6 +64,20 @@ export default function Register() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
+          <label className="text-xs font-medium text-purple-200/70 ml-1">Никнейм</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <input
+              {...register('username')}
+              type="text"
+              placeholder="username123"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            />
+          </div>
+          {errors.username && <p className="text-red-400 text-xs mt-1 ml-1">{errors.username.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-purple-200/70 ml-1">Имя</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
@@ -85,20 +92,6 @@ export default function Register() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Email</label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
-            <input
-              {...register('email')}
-              type="email"
-              placeholder="name@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
-            />
-          </div>
-          {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
           <label className="text-xs font-medium text-purple-200/70 ml-1">Фамилия</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
@@ -110,6 +103,34 @@ export default function Register() {
             />
           </div>
           {errors.surname && <p className="text-red-400 text-xs mt-1 ml-1">{errors.surname.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-purple-200/70 ml-1">Отчество <span className="text-purple-300/50">(опционально)</span></label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <input
+              {...register('patronymic')}
+              type="text"
+              placeholder="Сергеевич"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            />
+          </div>
+          {errors.patronymic && <p className="text-red-400 text-xs mt-1 ml-1">{errors.patronymic.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-purple-200/70 ml-1">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <input
+              {...register('email')}
+              type="email"
+              placeholder="name@example.com"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            />
+          </div>
+          {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">

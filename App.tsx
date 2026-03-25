@@ -13,6 +13,7 @@ import AppLayout from './src/components/AppLayout.tsx';
 import Dashboard from './src/pages/app/Dashboard.tsx';
 import Chat from './src/pages/app/Chat.tsx';
 import Roadmaps from './src/pages/app/Roadmaps.tsx';
+import Profile from './src/pages/app/Profile.tsx';
 import AppNotFound from './src/pages/app/AppNotFound.tsx';
 import { isAuthenticatedSession } from './src/api/auth.ts';
 
@@ -37,7 +38,7 @@ const PublicOnlyRoute: React.FC<{ children: React.ReactElement }> = ({ children 
 const App: React.FC = () => {
   return (
     <Theme appearance="dark" radius="large" scaling="100%">
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <main className="min-h-screen font-sans selection:bg-purple-500/30">
           <Routes>
             <Route
@@ -74,6 +75,7 @@ const App: React.FC = () => {
               )}
             >
               <Route index element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
               <Route path="chat" element={<Chat />} />
               <Route path="roadmaps" element={<Roadmaps />} />
               <Route path="*" element={<AppNotFound />} />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, MessageCircle, Map, Menu, X } from 'lucide-react';
+import { LogOut, MessageCircle, Map, Menu, UserRound, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { clearAuthSession, logoutUser } from '../api/auth';
 import brainRaspberry from '../assets/brain-raspberry.svg';
@@ -8,7 +8,7 @@ import brainRaspberry from '../assets/brain-raspberry.svg';
 const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
 
   const handleLogout = async () => {
     try {
@@ -22,15 +22,21 @@ const AppLayout: React.FC = () => {
   };
 
   const navItems = [
+    { label: 'Профиль', href: '/app/profile', icon: UserRound },
     { label: 'АИ чат', href: '/app/chat', icon: MessageCircle },
     { label: 'Роудмапы', href: '/app/roadmaps', icon: Map },
   ];
 
   const isActive = (href: string) => location.pathname === href;
+  const handleNavItemClick = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#080512] text-white flex flex-col">
-      <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
+      <header className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <button
@@ -71,6 +77,7 @@ const AppLayout: React.FC = () => {
                 <Link
                   key={item.href}
                   to={item.href}
+                  onClick={handleNavItemClick}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-purple-600/20 text-purple-200 border border-purple-500/30'
