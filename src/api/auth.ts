@@ -109,6 +109,7 @@ export type TeamMembersResponse = {
 };
 
 const ACCESS_TOKEN_KEY = 'tl_access_token';
+const REFRESH_TOKEN_KEY = 'tl_refresh_token';
 const AUTH_FLAG_KEY = 'tl_auth';
 let refreshAccessTokenPromise: Promise<string> | null = null;
 
@@ -157,15 +158,20 @@ export async function logoutUser(): Promise<void> {
 export function setAuthSession(tokens: AuthTokens): void {
   localStorage.setItem(AUTH_FLAG_KEY, '1');
   localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
+
+  if (tokens.refresh_token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
+  }
 }
 
 export function clearAuthSession(): void {
   localStorage.removeItem(AUTH_FLAG_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 export function isAuthenticatedSession(): boolean {
-  return localStorage.getItem(AUTH_FLAG_KEY) === '1' && Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
+  return localStorage.getItem(AUTH_FLAG_KEY) === '1';
 }
 
 async function getRefreshedAccessToken(): Promise<string> {
@@ -182,10 +188,15 @@ async function getRefreshedAccessToken(): Promise<string> {
   return refreshAccessTokenPromise;
 }
 
-async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<Response> {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+export async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<Response> {
+  let token = localStorage.getItem(ACCESS_TOKEN_KEY);
   if (!token) {
-    throw new Error('Токен авторизации не найден');
+    try {
+      token = await getRefreshedAccessToken();
+    } catch {
+      clearAuthSession();
+      throw new Error('Сессия истекла. Выполните вход снова.');
+    }
   }
 
   const makeRequest = async (accessToken: string): Promise<Response> => {
@@ -207,6 +218,10 @@ async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<
     try {
       const refreshedAccessToken = await getRefreshedAccessToken();
       response = await makeRequest(refreshedAccessToken);
+      if (response.status === 401) {
+        clearAuthSession();
+        throw new Error('Сессия истекла. Выполните вход снова.');
+      }
     } catch {
       clearAuthSession();
       throw new Error('Сессия истекла. Выполните вход снова.');

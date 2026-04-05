@@ -5,6 +5,11 @@ import { toast } from 'react-toastify';
 import { clearAuthSession, logoutUser } from '../api/auth';
 import brainRaspberry from '../assets/brain-raspberry.svg';
 
+export type AppLayoutOutletContext = {
+  sidebarOpen: boolean;
+  setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
 const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,7 +106,7 @@ const AppLayout: React.FC = () => {
               ? 'w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4'
               : 'mx-auto w-full max-w-7xl px-6 py-10'}
           >
-            <Outlet />
+            <Outlet context={{ sidebarOpen, setSidebarOpen }} />
           </div>
         </main>
 
