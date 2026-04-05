@@ -30,6 +30,17 @@ export type UpdateNamePayload = {
   patronymic?: string;
 };
 
+export type ChangePasswordPayload = {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+};
+
+export type ChangePasswordResponse = {
+  message: string;
+  detail?: string;
+};
+
 export type UserProfile = {
   id?: string;
   user_id?: number;
@@ -43,8 +54,63 @@ export type UserProfile = {
   updated_at?: string;
 };
 
+export type SearchUser = {
+  user_id: number;
+  username: string;
+  name: string;
+  surname: string;
+  patronymic?: string | null;
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserSearchResponse = {
+  users: SearchUser[];
+  total: number;
+};
+
+export type TeamItem = {
+  team_id: number;
+  name: string;
+  created_at: string;
+};
+
+export type MyTeamsResponse = {
+  teams: TeamItem[];
+  total: number;
+};
+
+export type CreateTeamPayload = {
+  name: string;
+};
+
+export type RenameTeamPayload = {
+  name: string;
+};
+
+export type ApiStatusResponse = {
+  status?: string;
+  message?: string;
+  detail?: string;
+};
+
+export type TeamMemberItem = {
+  id: number;
+  team_id: number;
+  user_id: number;
+  team_role_id: number;
+  joined_at: string;
+};
+
+export type TeamMembersResponse = {
+  users: TeamMemberItem[];
+  total: number;
+};
+
 const ACCESS_TOKEN_KEY = 'tl_access_token';
 const AUTH_FLAG_KEY = 'tl_auth';
+let refreshAccessTokenPromise: Promise<string> | null = null;
 
 async function requestAuth<TResponse, TBody>(
   endpoint: string,
@@ -102,22 +168,63 @@ export function isAuthenticatedSession(): boolean {
   return localStorage.getItem(AUTH_FLAG_KEY) === '1' && Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
 }
 
-async function requestWithAuth<TResponse>(
-  endpoint: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-): Promise<TResponse> {
+async function getRefreshedAccessToken(): Promise<string> {
+  if (!refreshAccessTokenPromise) {
+    refreshAccessTokenPromise = (async () => {
+      const tokens = await requestAuth<AuthTokens, undefined>('/api/v1/auth/refresh', undefined, 'POST');
+      setAuthSession(tokens);
+      return tokens.access_token;
+    })().finally(() => {
+      refreshAccessTokenPromise = null;
+    });
+  }
+
+  return refreshAccessTokenPromise;
+}
+
+async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<Response> {
   const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   if (!token) {
     throw new Error('Токен авторизации не найден');
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const makeRequest = async (accessToken: string): Promise<Response> => {
+    const headers = {
+      ...(init.headers as Record<string, string> | undefined),
+      'Authorization': `Bearer ${accessToken}`,
+    };
+
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      ...init,
+      headers,
+      credentials: 'include',
+    });
+  };
+
+  let response = await makeRequest(token);
+
+  if (response.status === 401) {
+    try {
+      const refreshedAccessToken = await getRefreshedAccessToken();
+      response = await makeRequest(refreshedAccessToken);
+    } catch {
+      clearAuthSession();
+      throw new Error('Сессия истекла. Выполните вход снова.');
+    }
+  }
+
+  return response;
+}
+
+async function requestWithAuth<TResponse>(
+  endpoint: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+): Promise<TResponse> {
+  const response = await fetchWithAuthRetry(endpoint, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
-    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -141,21 +248,12 @@ export async function getCurrentProfile(): Promise<UserProfile> {
 }
 
 export async function updateUserProfile(file: File): Promise<UserProfile> {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-  if (!token) {
-    throw new Error('Токен авторизации не найден');
-  }
-
   const formData = new FormData();
   // Пробуем разные имена поля - "avatar" более вероятнее чем "file"
   formData.append('avatar', file);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile`, {
+  const response = await fetchWithAuthRetry('/api/v1/user/profile', {
     method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    credentials: 'include',
     body: formData,
   });
 
@@ -181,18 +279,11 @@ export async function updateUserProfile(file: File): Promise<UserProfile> {
 }
 
 export async function updateUserName(payload: UpdateNamePayload): Promise<UserProfile> {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-  if (!token) {
-    throw new Error('Токен авторизации не найден');
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/name`, {
+  const response = await fetchWithAuthRetry('/api/v1/user/name', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
-    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
@@ -210,4 +301,130 @@ export async function updateUserName(payload: UpdateNamePayload): Promise<UserPr
   }
 
   return (await response.json()) as UserProfile;
+}
+
+export async function searchUsers(username: string, limit = 20): Promise<UserSearchResponse> {
+  const normalizedUsername = username.trim();
+  if (!normalizedUsername) {
+    return { users: [], total: 0 };
+  }
+
+  const normalizedLimit = Math.max(1, Math.min(limit, 100));
+  const query = new URLSearchParams({
+    username: normalizedUsername,
+    limit: String(normalizedLimit),
+  });
+
+  return requestWithAuth<UserSearchResponse>(`/api/v1/user/search?${query.toString()}`);
+}
+
+export async function changePassword(payload: ChangePasswordPayload): Promise<ChangePasswordResponse> {
+  const response = await fetchWithAuthRetry('/api/v1/password/change', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Произошла ошибка при смене пароля';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as ChangePasswordResponse;
+}
+
+export async function getMyTeams(): Promise<MyTeamsResponse> {
+  return requestWithAuth<MyTeamsResponse>('/api/v1/teams/my-teams');
+}
+
+export async function createTeam(payload: CreateTeamPayload): Promise<TeamItem> {
+  const response = await fetchWithAuthRetry('/api/v1/teams', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Не удалось создать команду';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as TeamItem;
+}
+
+export async function getTeamMembers(teamId: number): Promise<TeamMembersResponse> {
+  return requestWithAuth<TeamMembersResponse>(`/api/v1/teams/${teamId}/users`);
+}
+
+export async function getUserById(userId: number): Promise<UserProfile> {
+  return requestWithAuth<UserProfile>(`/api/v1/user/${userId}`);
+}
+
+export async function renameTeam(teamId: number, payload: RenameTeamPayload): Promise<TeamItem> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Не удалось переименовать команду';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as TeamItem;
+}
+
+export async function deleteTeam(teamId: number): Promise<ApiStatusResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Не удалось удалить команду';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as ApiStatusResponse;
 }

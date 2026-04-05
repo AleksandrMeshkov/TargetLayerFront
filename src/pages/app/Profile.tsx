@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { KeyRound, Mail, Upload, UserRound } from 'lucide-react';
+import { KeyRound, Upload, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { UserProfile } from '../../api/auth';
 import { getCurrentProfile, updateUserName, updateUserProfile } from '../../api/auth';
 import { toast } from 'react-toastify';
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -17,12 +19,10 @@ const Profile: React.FC = () => {
   const getAvatarUrl = (avatarPath: string | null | undefined): string | null => {
     if (!avatarPath) return null;
     
-    // avatar_url от сервера это уже полный URL, просто возвращаем его
     if (avatarPath.startsWith('http')) {
       return avatarPath;
     }
     
-    // На случай если вдруг придет относительный путь
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'https://targetl.site';
     return `${baseUrl}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
   };
@@ -117,7 +117,6 @@ const Profile: React.FC = () => {
       return;
     }
 
-    // Проверяем размер файла (не более 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error('Размер файла не должен превышать 5MB');
@@ -132,7 +131,6 @@ const Profile: React.FC = () => {
       console.log('Все поля профиля:', Object.keys(updatedProfile));
       console.log('URL аватара:', updatedProfile.avatar_url);
       
-      // Обновляем профиль со свежими данными с сервера
       const freshProfile = await getCurrentProfile();
       console.log('Свежий профиль с /api/v1/user/me:', freshProfile);
       console.log('Avatar в свежем профиле:', freshProfile.avatar_url);
@@ -145,7 +143,6 @@ const Profile: React.FC = () => {
       toast.error(message);
     } finally {
       setUploading(false);
-      // Очищаем input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -300,18 +297,11 @@ const Profile: React.FC = () => {
         <nav className="mt-10 space-y-4">
           <button
             type="button"
+            onClick={() => navigate('/app/change-password')}
             className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-200 transition-colors hover:bg-white/10"
           >
             <KeyRound className="h-4 w-4 text-purple-300" />
             Сменить пароль
-          </button>
-
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-200 transition-colors hover:bg-white/10"
-          >
-            <Mail className="h-4 w-4 text-purple-300" />
-            Сменить e-mail
           </button>
         </nav>
       </div>

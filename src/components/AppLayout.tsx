@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, MessageCircle, Map, Menu, UserRound, X } from 'lucide-react';
+import { LogOut, MessageCircle, Map, Menu, Search, Shield, UserRound, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { clearAuthSession, logoutUser } from '../api/auth';
 import brainRaspberry from '../assets/brain-raspberry.svg';
@@ -23,11 +23,14 @@ const AppLayout: React.FC = () => {
 
   const navItems = [
     { label: 'Профиль', href: '/app/profile', icon: UserRound },
+    { label: 'Команды', href: '/app/teams', icon: Shield },
+    { label: 'Поиск пользователей', href: '/app/search', icon: Search },
     { label: 'АИ чат', href: '/app/chat', icon: MessageCircle },
     { label: 'Роудмапы', href: '/app/roadmaps', icon: Map },
   ];
 
   const isActive = (href: string) => location.pathname === href;
+  const isTeamWorkspaceRoute = location.pathname.startsWith('/app/teams/');
   const handleNavItemClick = () => {
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
@@ -92,8 +95,12 @@ const AppLayout: React.FC = () => {
           </nav>
         </aside>
 
-        <main className="flex-1">
-          <div className="mx-auto w-full max-w-7xl px-6 py-10">
+        <main className={`flex-1 transition-[margin] duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}`}>
+          <div
+            className={isTeamWorkspaceRoute
+              ? 'w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4'
+              : 'mx-auto w-full max-w-7xl px-6 py-10'}
+          >
             <Outlet />
           </div>
         </main>
