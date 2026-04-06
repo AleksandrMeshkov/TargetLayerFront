@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Shield, Users, X } from 'lucide-react';
+import { LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
@@ -11,6 +11,12 @@ import {
 	type TeamMemberItem,
 	type UserProfile,
 } from '../../api/auth';
+import {
+	getMyRoadmaps,
+	getRoadmapsByTeam,
+	shareRoadmapToTeam,
+	type RoadmapItem,
+} from '../../api/roadmaps';
 
 type TeamLocationState = {
 	teamName?: string;
@@ -44,6 +50,19 @@ const formatRole = (teamRoleId: number): string => {
 	return `Роль #${teamRoleId}`;
 };
 
+const formatDate = (value: string): string => {
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) {
+		return value;
+	}
+
+	return new Intl.DateTimeFormat('ru-RU', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+	}).format(date);
+};
+
 const TeamView: React.FC = () => {
 	const navigate = useNavigate();
 	const { teamId } = useParams<{ teamId: string }>();
@@ -60,6 +79,13 @@ const TeamView: React.FC = () => {
 	const [savingName, setSavingName] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [myUserId, setMyUserId] = useState<number | null>(null);
+	const [teamRoadmaps, setTeamRoadmaps] = useState<RoadmapItem[]>([]);
+	const [isLoadingTeamRoadmaps, setIsLoadingTeamRoadmaps] = useState(false);
+	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+	const [myRoadmaps, setMyRoadmaps] = useState<RoadmapItem[]>([]);
+	const [isLoadingMyRoadmaps, setIsLoadingMyRoadmaps] = useState(false);
+	const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
+	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
 
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
@@ -74,6 +100,26 @@ const TeamView: React.FC = () => {
 	}, [members, myUserId]);
 
 	const isAdmin = myMembership?.membership.team_role_id === 1;
+
+	const loadTeamRoadmaps = async () => {
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			return;
+		}
+
+		try {
+			setIsLoadingTeamRoadmaps(true);
+			const response = await getRoadmapsByTeam(numericTeamId);
+			const sortedRoadmaps = [...response.roadmaps].sort(
+				(left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime(),
+			);
+			setTeamRoadmaps(sortedRoadmaps);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось загрузить роудмапы команды';
+			toast.error(message);
+		} finally {
+			setIsLoadingTeamRoadmaps(false);
+		}
+	};
 
 	const fetchMembers = async () => {
 		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
@@ -119,6 +165,7 @@ const TeamView: React.FC = () => {
 
 		fetchCurrentUser();
 		fetchMembers();
+		loadTeamRoadmaps();
 	}, []);
 
 	const handleOpenTeamPanel = async () => {
@@ -130,6 +177,65 @@ const TeamView: React.FC = () => {
 
 	const handleCloseTeamPanel = () => {
 		setIsModalOpen(false);
+	};
+
+	const handleOpenShareModal = async () => {
+		if (!isAdmin) {
+			toast.error('Поделиться роудмапом может только администратор команды');
+			return;
+		}
+
+		setIsShareModalOpen(true);
+		setSelectedRoadmapId(null);
+
+		try {
+			setIsLoadingMyRoadmaps(true);
+			const response = await getMyRoadmaps();
+			const personalRoadmaps = response.roadmaps
+				.filter((roadmap) => roadmap.team_id == null)
+				.sort((left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime());
+			setMyRoadmaps(personalRoadmaps);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось загрузить личные роудмапы';
+			toast.error(message);
+		} finally {
+			setIsLoadingMyRoadmaps(false);
+		}
+	};
+
+	const handleCloseShareModal = () => {
+		if (isSharingRoadmap) {
+			return;
+		}
+
+		setIsShareModalOpen(false);
+		setSelectedRoadmapId(null);
+	};
+
+	const handleShareRoadmap = async () => {
+		if (!selectedRoadmapId) {
+			toast.error('Выберите роудмап для шаринга');
+			return;
+		}
+
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			toast.error('Некорректный идентификатор команды');
+			return;
+		}
+
+		try {
+			setIsSharingRoadmap(true);
+			await shareRoadmapToTeam(selectedRoadmapId, { team_id: numericTeamId });
+			toast.success('Роудмап успешно добавлен в команду');
+			setIsShareModalOpen(false);
+			setSelectedRoadmapId(null);
+			await loadTeamRoadmaps();
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось поделиться роудмапом';
+			toast.error(message);
+		} finally {
+			setIsSharingRoadmap(false);
+		}
 	};
 
 	const handleRenameTeam = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -221,17 +327,73 @@ const TeamView: React.FC = () => {
 								<h2 className="text-lg font-semibold text-white">Доска роудмапов команды</h2>
 								<p className="text-xs text-purple-100/70">Основное рабочее пространство команды</p>
 							</div>
-							{isAdmin && (
+							<div className="flex items-center gap-2">
 								<button
 									type="button"
-									className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
+									onClick={() => void loadTeamRoadmaps()}
+									className="rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/35"
+									disabled={isLoadingTeamRoadmaps}
 								>
-									Вывести роудмапы на доску
+									{isLoadingTeamRoadmaps ? 'Обновление...' : 'Обновить'}
 								</button>
-							)}
+								{isAdmin && (
+									<button
+										type="button"
+										onClick={() => void handleOpenShareModal()}
+										className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
+									>
+										Поделиться роудмапом
+									</button>
+								)}
+							</div>
 						</div>
 
-						<div className="flex-1 rounded-xl border border-white/15 bg-black/10" />
+						<div className="flex-1 overflow-y-auto rounded-xl border border-white/15 bg-black/10 p-3 sm:p-4">
+							{isLoadingTeamRoadmaps && (
+								<div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+									<LoaderCircle className="h-4 w-4 animate-spin" />
+									Загрузка роудмапов команды...
+								</div>
+							)}
+
+							{!isLoadingTeamRoadmaps && teamRoadmaps.length === 0 && (
+								<div className="rounded-xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-6 text-center text-sm text-purple-100/70">
+									В этой команде пока нет роудмапов.
+								</div>
+							)}
+
+							{!isLoadingTeamRoadmaps && teamRoadmaps.length > 0 && (
+								<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+									{teamRoadmaps.map((roadmap) => (
+										<article
+											key={roadmap.roadmap_id}
+											className="rounded-xl border border-white/10 bg-black/20 p-4"
+										>
+											<div className="flex items-start justify-between gap-3">
+												<div>
+													<p className="text-xs uppercase tracking-wide text-purple-200/70">Роудмап #{roadmap.roadmap_id}</p>
+													<h3 className="mt-2 text-sm font-semibold text-white">
+														{roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
+													</h3>
+												</div>
+												<span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-purple-100/80">
+													{roadmap.tasks.length} задач
+												</span>
+											</div>
+
+											{roadmap.goal?.description && (
+												<p className="mt-2 line-clamp-3 text-xs text-purple-100/70">{roadmap.goal.description}</p>
+											)}
+
+											<div className="mt-3 flex items-center justify-between text-xs text-purple-100/60">
+												<span>{roadmap.completed ? 'Завершен' : 'В процессе'}</span>
+												<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
+											</div>
+										</article>
+									))}
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -351,6 +513,91 @@ const TeamView: React.FC = () => {
 								})}
 							</div>
 						)}
+					</div>
+				</div>
+			)}
+
+			{isShareModalOpen && (
+				<div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
+					<div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#140f24] p-5 shadow-2xl sm:p-6">
+						<div className="mb-4 flex items-start justify-between gap-4">
+							<div>
+								<div className="flex items-center gap-2">
+									<Map className="h-5 w-5 text-purple-300" />
+									<h2 className="text-xl font-bold text-white">Поделиться роудмапом</h2>
+								</div>
+								<p className="mt-1 text-sm text-purple-100/70">Выберите личный роудмап и добавьте его в команду {teamTitle}</p>
+							</div>
+							<button
+								type="button"
+								onClick={handleCloseShareModal}
+								disabled={isSharingRoadmap}
+								className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
+								aria-label="Закрыть окно шаринга"
+							>
+								<X className="h-4 w-4" />
+							</button>
+						</div>
+
+						{isLoadingMyRoadmaps && (
+							<div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+								<LoaderCircle className="h-4 w-4 animate-spin" />
+								Загрузка личных роудмапов...
+							</div>
+						)}
+
+						{!isLoadingMyRoadmaps && myRoadmaps.length === 0 && (
+							<p className="rounded-xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-5 text-sm text-purple-100/70">
+								У вас нет личных роудмапов для шаринга.
+							</p>
+						)}
+
+						{!isLoadingMyRoadmaps && myRoadmaps.length > 0 && (
+							<div className="max-h-[46vh] space-y-2 overflow-y-auto pr-1">
+								{myRoadmaps.map((roadmap) => {
+									const isSelected = roadmap.roadmap_id === selectedRoadmapId;
+									return (
+										<button
+											key={roadmap.roadmap_id}
+											type="button"
+											onClick={() => setSelectedRoadmapId(roadmap.roadmap_id)}
+											className={`w-full rounded-xl border p-3 text-left transition-colors ${
+												isSelected
+													? 'border-purple-400/70 bg-purple-500/20'
+													: 'border-white/10 bg-black/20 hover:border-white/25 hover:bg-black/35'
+											}`}
+										>
+											<p className="text-sm font-semibold text-white">
+												{roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
+											</p>
+											<div className="mt-1 flex items-center justify-between text-xs text-purple-100/70">
+												<span>{roadmap.tasks.length} задач</span>
+												<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
+											</div>
+										</button>
+									);
+								})}
+							</div>
+						)}
+
+						<div className="mt-5 flex justify-end gap-2">
+							<button
+								type="button"
+								onClick={handleCloseShareModal}
+								disabled={isSharingRoadmap}
+								className="rounded-lg border border-white/10 bg-black/20 px-4 py-2 text-sm text-purple-100 transition-colors hover:bg-black/35 disabled:opacity-60"
+							>
+								Отмена
+							</button>
+							<button
+								type="button"
+								onClick={() => void handleShareRoadmap()}
+								disabled={isSharingRoadmap || !selectedRoadmapId}
+								className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
+							>
+								{isSharingRoadmap ? 'Отправка...' : 'Поделиться'}
+							</button>
+						</div>
 					</div>
 				</div>
 			)}

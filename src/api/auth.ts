@@ -1,4 +1,6 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'https://targetl.site').replace(/\/$/, '');
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '' : 'https://targetl.site')
+).replace(/\/$/, '');
 
 type ApiErrorResponse = {
   detail?: string;
@@ -93,6 +95,13 @@ export type ApiStatusResponse = {
   status?: string;
   message?: string;
   detail?: string;
+};
+
+export type TeamInviteEmailResponse = {
+  status: string;
+  email: string;
+  team_id: number;
+  expires_at: string;
 };
 
 export type TeamMemberItem = {
@@ -360,6 +369,31 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<Ch
 
 export async function getMyTeams(): Promise<MyTeamsResponse> {
   return requestWithAuth<MyTeamsResponse>('/api/v1/teams/my-teams');
+}
+
+export async function inviteUserByEmail(teamId: number, userId: number): Promise<TeamInviteEmailResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}/invite-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Не удалось отправить приглашение';
+    try {
+      const errorPayload = (await response.json()) as ApiErrorResponse;
+      if (errorPayload?.detail) {
+        errorMessage = errorPayload.detail;
+      }
+    } catch {
+      errorMessage = `Ошибка ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as TeamInviteEmailResponse;
 }
 
 export async function createTeam(payload: CreateTeamPayload): Promise<TeamItem> {

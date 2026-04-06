@@ -42,6 +42,11 @@ export type AIConversationItem = {
   updated_at: string;
 };
 
+export type AIDeleteConversationResponse = {
+  status: string;
+  conversation_id: number;
+};
+
 async function parseError(response: Response, fallbackMessage: string): Promise<string> {
   let errorMessage = fallbackMessage;
   try {
@@ -119,4 +124,20 @@ export async function createAIConversation(): Promise<number> {
 
   const data = (await response.json()) as { conversation_id: number };
   return data.conversation_id;
+}
+
+export async function deleteAIConversation(conversationId: number): Promise<AIDeleteConversationResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/ai/conversations/${conversationId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const message = await parseError(response, 'Не удалось удалить чат');
+    throw new Error(message);
+  }
+
+  return (await response.json()) as AIDeleteConversationResponse;
 }

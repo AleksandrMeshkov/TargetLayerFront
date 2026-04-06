@@ -38,6 +38,16 @@ export type RoadmapsListResponse = {
   total: number;
 };
 
+export type ShareRoadmapPayload = {
+  team_id: number;
+};
+
+export type ShareRoadmapResponse = {
+  status?: string;
+  message?: string;
+  detail?: string;
+};
+
 async function parseError(response: Response, fallbackMessage: string): Promise<string> {
   let errorMessage = fallbackMessage;
   try {
@@ -79,4 +89,38 @@ export async function getRoadmapTasks(roadmapId: number): Promise<RoadmapTask[]>
   }
 
   return (await response.json()) as RoadmapTask[];
+}
+
+export async function getRoadmapsByTeam(teamId: number): Promise<RoadmapsListResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/roadmaps/team/${teamId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, 'Не удалось загрузить роудмапы команды'));
+  }
+
+  return (await response.json()) as RoadmapsListResponse;
+}
+
+export async function shareRoadmapToTeam(
+  roadmapId: number,
+  payload: ShareRoadmapPayload,
+): Promise<ShareRoadmapResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/roadmaps/${roadmapId}/share-to-team`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, 'Не удалось поделиться роудмапом с командой'));
+  }
+
+  return (await response.json()) as ShareRoadmapResponse;
 }

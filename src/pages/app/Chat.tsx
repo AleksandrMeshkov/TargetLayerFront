@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Bot, Menu, MessageCircle, Plus, SendHorizontal, X } from 'lucide-react';
+import { Bot, Menu, MessageCircle, Plus, SendHorizontal, Trash2, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
   aiChat,
   createAIConversation,
+  deleteAIConversation,
   getAIConversations,
   getAIHistory,
   type AIConversationItem,
@@ -101,6 +102,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
 
   useEffect(() => {
@@ -306,6 +308,48 @@ const Chat: React.FC = () => {
     }
   };
 
+  const handleDeleteConversation = async (conversationId: number): Promise<void> => {
+    if (deletingConversationId != null) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Удалить чат #${conversationId}? Это действие нельзя отменить.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingConversationId(conversationId);
+      await deleteAIConversation(conversationId);
+
+      const nextConversations = conversations.filter((item) => item.conversation_id !== conversationId);
+      const nextActiveConversationId = activeConversationId === conversationId
+        ? (nextConversations[0]?.conversation_id ?? null)
+        : activeConversationId;
+
+      setConversations(nextConversations);
+      setHistoryByConversation((prev) => {
+        const { [conversationId]: _removed, ...rest } = prev;
+        return rest;
+      });
+      setActiveConversationId(nextActiveConversationId);
+
+      if (nextActiveConversationId == null) {
+        setMessages([]);
+      } else if (activeConversationId === conversationId) {
+        const nextHistoryMessages = historyByConversation[nextActiveConversationId]?.messages ?? [];
+        setMessages(nextHistoryMessages.map(mapHistoryMessage));
+      }
+
+      toast.success(`Чат #${conversationId} удален`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось удалить чат';
+      toast.error(message);
+    } finally {
+      setDeletingConversationId(null);
+    }
+  };
+
   return (
     <section className="relative">
       <div className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
@@ -361,20 +405,37 @@ const Chat: React.FC = () => {
 
             {conversations.map((conversation) => {
               const isActive = conversation.conversation_id === activeConversationId;
+              const isDeleting = deletingConversationId === conversation.conversation_id;
               return (
-                <button
+                <div
                   key={conversation.conversation_id}
-                  type="button"
-                  onClick={() => selectConversation(conversation.conversation_id)}
                   className={`w-full rounded-xl border px-3 py-3 text-left transition ${
                     isActive
                       ? 'border-purple-400/60 bg-purple-500/20'
                       : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                   }`}
                 >
-                  <p className="text-sm font-medium text-purple-50">Чат #{conversation.conversation_id}</p>
-                  <p className="mt-1 text-xs text-purple-100/60">Обновлен: {formatConversationDate(conversation.updated_at)}</p>
-                </button>
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => selectConversation(conversation.conversation_id)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="text-sm font-medium text-purple-50">Чат #{conversation.conversation_id}</p>
+                      <p className="mt-1 text-xs text-purple-100/60">Обновлен: {formatConversationDate(conversation.updated_at)}</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteConversation(conversation.conversation_id)}
+                      disabled={deletingConversationId !== null || isCreatingConversation || isSending}
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-200 transition hover:bg-red-500/20 disabled:opacity-60"
+                      aria-label={`Удалить чат #${conversation.conversation_id}`}
+                    >
+                      {isDeleting ? <span className="text-[10px]">...</span> : <Trash2 className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -495,19 +556,35 @@ const Chat: React.FC = () => {
 
             <div className="space-y-2 overflow-y-auto">
               {conversations.map((conversation) => (
-                <button
+                <div
                   key={`mobile-${conversation.conversation_id}`}
-                  type="button"
-                  onClick={() => selectConversation(conversation.conversation_id)}
                   className={`w-full rounded-xl border px-3 py-3 text-left ${
                     conversation.conversation_id === activeConversationId
                       ? 'border-purple-400/60 bg-purple-500/20'
                       : 'border-white/10 bg-white/5'
                   }`}
                 >
-                  <p className="text-sm text-purple-50">Чат #{conversation.conversation_id}</p>
-                  <p className="mt-1 text-xs text-purple-100/60">{formatConversationDate(conversation.updated_at)}</p>
-                </button>
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => selectConversation(conversation.conversation_id)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="text-sm text-purple-50">Чат #{conversation.conversation_id}</p>
+                      <p className="mt-1 text-xs text-purple-100/60">{formatConversationDate(conversation.updated_at)}</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteConversation(conversation.conversation_id)}
+                      disabled={deletingConversationId !== null || isCreatingConversation || isSending}
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-200 transition hover:bg-red-500/20 disabled:opacity-60"
+                      aria-label={`Удалить чат #${conversation.conversation_id}`}
+                    >
+                      {deletingConversationId === conversation.conversation_id ? <span className="text-[10px]">...</span> : <Trash2 className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
