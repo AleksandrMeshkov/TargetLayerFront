@@ -1,4 +1,4 @@
-import { fetchWithAuthRetry } from '../auth';
+import { fetchWithAuthRetry } from '../auth/fetchWithAuthRetry';
 import { parseApiError } from '../../utils/api/parseApiError';
 import type { AIDeleteConversationResponse, AIChatPayload, AIConversationItem, AIHistoryConversation, AIRoadmapResponse,
 } from '../../types/aiTypes/aiTypes';

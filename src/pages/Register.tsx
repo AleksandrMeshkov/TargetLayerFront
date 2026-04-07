@@ -6,7 +6,8 @@ import * as z from 'zod';
 import { Mail, Lock, User, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
-import { registerUser, setAuthSession } from '../api/auth';
+import { registerUser } from '../api/auth/client';
+import { setAuthSession } from '../api/auth/session';
 
 const schema = z.object({
   username: z.string().min(3, 'Никнейм должен содержать минимум 3 символа').regex(/^[a-zA-Z0-9_]+$/, 'Никнейм может содержать только буквы, цифры и подчеркивание'),

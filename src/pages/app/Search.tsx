@@ -3,13 +3,10 @@ import { Loader2, Search as SearchIcon, UserPlus, Users, X } from 'lucide-react'
 import { toast } from 'react-toastify';
 import {
 	getCurrentProfile,
-	getMyTeams,
-	getTeamMembers,
-	inviteUserByEmail,
 	searchUsers,
-	type SearchUser,
-	type TeamItem,
-} from '../../api/auth';
+} from '../../api/auth/userClient';
+import { getMyTeams, getTeamMembers, inviteUserByEmail } from '../../api/auth/teamClient';
+import type { SearchUser, TeamItem } from '../../types/authTypes/authTypes';
 
 const ADMIN_TEAM_ROLE_ID = 1;
 

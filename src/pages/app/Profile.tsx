@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound, Upload, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { UserProfile } from '../../api/auth';
-import { getCurrentProfile, updateUserName, updateUserProfile } from '../../api/auth';
+import type { UserProfile } from '../../types/authTypes/authTypes';
+import { getCurrentProfile, updateUserName, updateUserProfile } from '../../api/auth/userClient';
 import { toast } from 'react-toastify';
 
 const Profile: React.FC = () => {

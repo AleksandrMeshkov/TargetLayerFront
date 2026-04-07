@@ -3,14 +3,15 @@ import { LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
-	deleteTeam,
 	getCurrentProfile,
-	getTeamMembers,
 	getUserById,
+} from '../../api/auth/userClient';
+import {
+	deleteTeam,
+	getTeamMembers,
 	renameTeam,
-	type TeamMemberItem,
-	type UserProfile,
-} from '../../api/auth';
+} from '../../api/auth/teamClient';
+import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
 import {
 	getMyRoadmaps,
 	getRoadmapsByTeam,

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, MessageCircle, Map, Menu, Search, Shield, UserRound, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { clearAuthSession, logoutUser } from '../api/auth';
+import { logoutUser } from '../api/auth/client';
+import { clearAuthSession } from '../api/auth/session';
 import brainRaspberry from '../assets/brain-raspberry.svg';
 
 export type AppLayoutOutletContext = {

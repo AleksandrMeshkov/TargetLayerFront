@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { changePassword } from '../../api/auth';
+import { changePassword } from '../../api/auth/passwordClient';
 
 const ChangePassword: React.FC = () => {
 	const navigate = useNavigate();

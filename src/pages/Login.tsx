@@ -6,7 +6,8 @@ import * as z from 'zod';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
-import { loginUser, setAuthSession } from '../api/auth';
+import { loginUser } from '../api/auth/client';
+import { setAuthSession } from '../api/auth/session';
 
 const schema = z.object({
   email: z.string().email('Введите корректный email'),

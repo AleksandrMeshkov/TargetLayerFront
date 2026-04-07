@@ -1,4 +1,4 @@
-import { fetchWithAuthRetry } from '../auth';
+import { fetchWithAuthRetry } from '../auth/fetchWithAuthRetry';
 import { parseApiError } from '../../utils/api/parseApiError';
 import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
 } from '../../types/roadmapsTypes/roadmapsTypes';

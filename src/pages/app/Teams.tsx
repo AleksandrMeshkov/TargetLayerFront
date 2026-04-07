@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { createTeam, getMyTeams, type TeamItem } from '../../api/auth';
+import { createTeam, getMyTeams } from '../../api/auth/teamClient';
+import type { TeamItem } from '../../types/authTypes/authTypes';
 
 const formatDate = (value: string): string => {
 	const date = new Date(value);
