@@ -109,17 +109,15 @@ const NotFound: React.FC = () => {
           </svg>
         </div>
 
-        <h1 className="mb-4 text-3xl font-bold text-white sm:text-4xl">
-          OOPS! Page Not Found
-        </h1>
+        <h1 className="mb-4 text-3xl font-bold text-white sm:text-4xl">Упс! Страница не найдена</h1>
         <p className="mb-8 text-base text-white/60 sm:text-lg">
-          We can&apos;t seem to find the page you are looking for!
+          Похоже, мы не можем найти страницу, которую вы ищете.
         </p>
         <a
-          href={typeof window !== 'undefined' ? window.location.origin : '/'}
+          href="/"
           className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
         >
-          Back to homepage
+          На главную
         </a>
 
         <div className="mt-16">

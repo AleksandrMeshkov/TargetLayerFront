@@ -16,7 +16,6 @@ import Roadmaps from './src/pages/app/Roadmaps.tsx';
 import Teams from './src/pages/app/Teams.tsx';
 import TeamView from './src/pages/app/TeamView.tsx';
 import Profile from './src/pages/app/Profile.tsx';
-import AppNotFound from './src/pages/app/AppNotFound.tsx';
 import Search from './src/pages/app/Search.tsx';
 import ChangePassword from './src/pages/app/ChangePassword.tsx';
 import { isAuthenticatedSession } from './src/api/auth/session.ts';
@@ -86,7 +85,6 @@ const App: React.FC = () => {
               <Route path="teams/:teamId" element={<TeamView />} />
               <Route path="search" element={<Search />} />
               <Route path="change-password" element={<ChangePassword />} />
-              <Route path="*" element={<AppNotFound />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

@@ -1,28 +1,22 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
 import { loginUser } from '../api/auth/client';
 import { setAuthSession } from '../api/auth/session';
 
-const schema = z.object({
-  email: z.string().email('Введите корректный email'),
-  password: z.string().min(6, 'Пароль должен быть не менее 6 символов'),
-});
-
-type FormData = z.infer<typeof schema>;
+type FormData = {
+  email: string;
+  password: string;
+};
 
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -50,13 +44,19 @@ export default function Login() {
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
             <input
-              {...register('email')}
+              {...register('email', {
+                required: 'Введите email',
+                pattern: {
+                  value: /^\S+@\S+\.\S+$/,
+                  message: 'Введите корректный email',
+                },
+              })}
               type="email"
               placeholder="name@example.com"
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
             />
           </div>
-          {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
+          {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.email.message)}</p>}
         </div>
 
         <div className="space-y-2">
@@ -67,7 +67,7 @@ export default function Login() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
             <input
-              {...register('password')}
+              {...register('password', { required: 'Введите пароль' })}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
@@ -81,7 +81,7 @@ export default function Login() {
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{errors.password.message}</p>}
+          {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.password.message)}</p>}
         </div>
 
         <button

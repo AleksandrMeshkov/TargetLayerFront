@@ -4,15 +4,31 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { changePassword } from '../../api/auth/passwordClient';
 
+type ChangePasswordForm = {
+	oldPassword: string;
+	newPassword: string;
+	confirmPassword: string;
+};
+
 const ChangePassword: React.FC = () => {
 	const navigate = useNavigate();
-	const [oldPassword, setOldPassword] = useState('');
-	const [newPassword, setNewPassword] = useState('');
-	const [confirmPassword, setConfirmPassword] = useState('');
+	const [form, setForm] = useState<ChangePasswordForm>({
+		oldPassword: '',
+		newPassword: '',
+		confirmPassword: '',
+	});
 	const [submitting, setSubmitting] = useState(false);
+
+	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = event.target;
+		setForm((prev) => ({ ...prev, [name]: value }));
+	};
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (submitting) return;
+
+		const { oldPassword, newPassword, confirmPassword } = form;
 
 		if (!oldPassword || !newPassword || !confirmPassword) {
 			toast.error('Заполните все поля');
@@ -57,9 +73,10 @@ const ChangePassword: React.FC = () => {
 						</label>
 						<input
 							id="old-password"
+							name="oldPassword"
 							type="password"
-							value={oldPassword}
-							onChange={(event) => setOldPassword(event.target.value)}
+							value={form.oldPassword}
+							onChange={handleChange}
 							autoComplete="current-password"
 							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
 						/>
@@ -71,9 +88,10 @@ const ChangePassword: React.FC = () => {
 						</label>
 						<input
 							id="new-password"
+							name="newPassword"
 							type="password"
-							value={newPassword}
-							onChange={(event) => setNewPassword(event.target.value)}
+							value={form.newPassword}
+							onChange={handleChange}
 							autoComplete="new-password"
 							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
 						/>
@@ -85,9 +103,10 @@ const ChangePassword: React.FC = () => {
 						</label>
 						<input
 							id="confirm-password"
+							name="confirmPassword"
 							type="password"
-							value={confirmPassword}
-							onChange={(event) => setConfirmPassword(event.target.value)}
+							value={form.confirmPassword}
+							onChange={handleChange}
 							autoComplete="new-password"
 							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
 						/>
