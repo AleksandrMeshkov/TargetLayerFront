@@ -100,11 +100,13 @@ const AppLayout: React.FC = () => {
           </nav>
         </aside>
 
-        <main className={`flex-1 transition-[margin] duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}`}>
+        <main
+          className={`flex flex-1 min-h-0 flex-col transition-[margin] duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}`}
+        >
           <div
             className={isTeamWorkspaceRoute
-              ? 'w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4'
-              : 'mx-auto w-full max-w-7xl px-6 py-10'}
+              ? 'flex min-h-0 flex-1 flex-col w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4'
+              : 'mx-auto flex min-h-0 flex-1 flex-col w-full max-w-7xl px-6 py-10'}
           >
             <Outlet context={{ sidebarOpen, setSidebarOpen }} />
           </div>

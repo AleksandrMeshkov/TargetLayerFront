@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, LoaderCircle, Map, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Circle, LoaderCircle, Map, Pencil, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getMyRoadmaps, getRoadmapTasks, type RoadmapItem, type RoadmapTask } from '../../api/roadmaps';
+import {
+  createRoadmapTask,
+  deleteRoadmapTask,
+  getMyRoadmaps,
+  getRoadmapTasks,
+  setRoadmapTaskComplete,
+  updateRoadmapGoal,
+  updateRoadmapTask,
+  type RoadmapItem,
+  type RoadmapTask,
+} from '../../api/roadmaps';
 
 function formatDate(dateValue: string): string {
   const date = new Date(dateValue);
@@ -27,6 +37,17 @@ const Roadmaps: React.FC = () => {
   const [isLoadingRoadmaps, setIsLoadingRoadmaps] = useState(true);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [taskBusyIds, setTaskBusyIds] = useState<Record<number, boolean>>({});
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskDescription, setEditTaskDescription] = useState('');
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [goalTitleDraft, setGoalTitleDraft] = useState('');
+  const [goalDescriptionDraft, setGoalDescriptionDraft] = useState('');
+  const [isSavingGoal, setIsSavingGoal] = useState(false);
 
   useEffect(() => {
     const loadRoadmaps = async () => {
@@ -73,6 +94,243 @@ const Roadmaps: React.FC = () => {
   );
 
   const selectedTasks = selectedRoadmapId != null ? tasksCache[selectedRoadmapId] : undefined;
+  const visibleTasks = useMemo(
+    () => sortTasks(selectedTasks ?? selectedRoadmap?.tasks ?? []),
+    [selectedRoadmap?.tasks, selectedTasks],
+  );
+
+  useEffect(() => {
+    if (!selectedRoadmap) {
+      setIsEditingGoal(false);
+      setEditingTaskId(null);
+      return;
+    }
+
+    setGoalTitleDraft(selectedRoadmap.goal?.title ?? '');
+    setGoalDescriptionDraft(selectedRoadmap.goal?.description ?? '');
+    setIsEditingGoal(false);
+    setEditingTaskId(null);
+  }, [selectedRoadmapId]);
+
+  const setTaskBusy = (taskId: number, busy: boolean) => {
+    setTaskBusyIds((prev) => ({ ...prev, [taskId]: busy }));
+  };
+
+  const updateRoadmapTasksState = (roadmapId: number, updater: (tasks: RoadmapTask[]) => RoadmapTask[]) => {
+    setRoadmaps((prev) => prev.map((item) => {
+      if (item.roadmap_id !== roadmapId) {
+        return item;
+      }
+      return {
+        ...item,
+        tasks: updater(item.tasks),
+      };
+    }));
+  };
+
+  const updateCachedTask = (roadmapId: number, updatedTask: RoadmapTask) => {
+    setTasksCache((prev) => {
+      const current = prev[roadmapId];
+      if (!current) {
+        return prev;
+      }
+      const next = current.map((task) => (task.task_id === updatedTask.task_id ? updatedTask : task));
+      return { ...prev, [roadmapId]: next };
+    });
+
+    updateRoadmapTasksState(roadmapId, (tasks) => tasks.map((task) => (
+      task.task_id === updatedTask.task_id ? updatedTask : task
+    )));
+  };
+
+  const appendCachedTask = (roadmapId: number, createdTask: RoadmapTask) => {
+    setTasksCache((prev) => {
+      const current = prev[roadmapId] ?? [];
+      return { ...prev, [roadmapId]: [...current, createdTask] };
+    });
+
+    updateRoadmapTasksState(roadmapId, (tasks) => [...tasks, createdTask]);
+  };
+
+  const removeCachedTask = (roadmapId: number, taskId: number) => {
+    setTasksCache((prev) => {
+      const current = prev[roadmapId];
+      if (!current) {
+        return prev;
+      }
+      return { ...prev, [roadmapId]: current.filter((task) => task.task_id !== taskId) };
+    });
+
+    updateRoadmapTasksState(roadmapId, (tasks) => tasks.filter((task) => task.task_id !== taskId));
+  };
+
+  const handleCreateTask = async (): Promise<void> => {
+    if (selectedRoadmapId == null) {
+      return;
+    }
+
+    const title = newTaskTitle.trim();
+    const description = newTaskDescription.trim();
+
+    if (!title) {
+      toast.error('Введите название задачи');
+      return;
+    }
+
+    const nextOrderIndex = visibleTasks.reduce((max, task) => Math.max(max, task.order_index), -1) + 1;
+
+    setIsCreatingTask(true);
+    try {
+      const created = await createRoadmapTask(selectedRoadmapId, {
+        title,
+        description: description.length > 0 ? description : null,
+        order_index: nextOrderIndex,
+      });
+
+      appendCachedTask(selectedRoadmapId, created);
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      toast.success('Задача создана');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось создать задачу';
+      toast.error(message);
+    } finally {
+      setIsCreatingTask(false);
+    }
+  };
+
+  const startEditTask = (task: RoadmapTask) => {
+    setEditingTaskId(task.task_id);
+    setEditTaskTitle(task.title);
+    setEditTaskDescription(task.description ?? '');
+  };
+
+  const cancelEditTask = () => {
+    setEditingTaskId(null);
+    setEditTaskTitle('');
+    setEditTaskDescription('');
+  };
+
+  const handleSaveTask = async (task: RoadmapTask): Promise<void> => {
+    if (selectedRoadmapId == null) {
+      return;
+    }
+    const title = editTaskTitle.trim();
+    const description = editTaskDescription.trim();
+
+    if (!title) {
+      toast.error('Название задачи не может быть пустым');
+      return;
+    }
+
+    setTaskBusy(task.task_id, true);
+    try {
+      const updated = await updateRoadmapTask(selectedRoadmapId, task.task_id, {
+        title,
+        description: description.length > 0 ? description : null,
+      });
+      updateCachedTask(selectedRoadmapId, updated);
+      toast.success('Задача обновлена');
+      cancelEditTask();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось обновить задачу';
+      toast.error(message);
+    } finally {
+      setTaskBusy(task.task_id, false);
+    }
+  };
+
+  const handleDeleteTask = async (task: RoadmapTask): Promise<void> => {
+    if (selectedRoadmapId == null) {
+      return;
+    }
+
+    if (!window.confirm('Удалить задачу?')) {
+      return;
+    }
+
+    setTaskBusy(task.task_id, true);
+    try {
+      await deleteRoadmapTask(selectedRoadmapId, task.task_id);
+      removeCachedTask(selectedRoadmapId, task.task_id);
+      if (editingTaskId === task.task_id) {
+        cancelEditTask();
+      }
+      toast.success('Задача удалена');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось удалить задачу';
+      toast.error(message);
+    } finally {
+      setTaskBusy(task.task_id, false);
+    }
+  };
+
+  const handleToggleTaskComplete = async (task: RoadmapTask): Promise<void> => {
+    if (selectedRoadmapId == null) {
+      return;
+    }
+
+    const nextCompleted = !task.completed;
+    setTaskBusy(task.task_id, true);
+    try {
+      const updated = await setRoadmapTaskComplete(selectedRoadmapId, task.task_id, nextCompleted);
+      updateCachedTask(selectedRoadmapId, updated);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось обновить статус задачи';
+      toast.error(message);
+    } finally {
+      setTaskBusy(task.task_id, false);
+    }
+  };
+
+  const handleSaveGoal = async (): Promise<void> => {
+    if (!selectedRoadmap) {
+      return;
+    }
+
+    const title = goalTitleDraft.trim();
+    const description = goalDescriptionDraft.trim();
+
+    if (!title) {
+      toast.error('Введите название цели');
+      return;
+    }
+
+    setIsSavingGoal(true);
+    try {
+      const response = await updateRoadmapGoal(selectedRoadmap.roadmap_id, {
+        title,
+        description: description.length > 0 ? description : null,
+      });
+
+      setRoadmaps((prev) => prev.map((item) => {
+        if (item.roadmap_id !== selectedRoadmap.roadmap_id) {
+          return item;
+        }
+
+        if (!response.goal || !item.goal) {
+          return item;
+        }
+
+        return {
+          ...item,
+          goal: {
+            ...item.goal,
+            title: response.goal.title,
+            description: response.goal.description ?? null,
+          },
+        };
+      }));
+
+      setIsEditingGoal(false);
+      toast.success('Цель обновлена');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось обновить цель';
+      toast.error(message);
+    } finally {
+      setIsSavingGoal(false);
+    }
+  };
 
   const handleSelectRoadmap = async (roadmapId: number): Promise<void> => {
     setSelectedRoadmapId(roadmapId);
@@ -137,7 +395,7 @@ const Roadmaps: React.FC = () => {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -162,8 +420,8 @@ const Roadmaps: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-white/10 bg-black/30 p-4">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)]">
+        <aside className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-black/30 p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs uppercase tracking-wide text-purple-200/70">Мои роудмапы</p>
             <span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">
@@ -171,7 +429,7 @@ const Roadmaps: React.FC = () => {
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {isLoadingRoadmaps && (
               <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/70">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -225,37 +483,98 @@ const Roadmaps: React.FC = () => {
           </div>
         </aside>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-6">
+        <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-6">
           {!selectedRoadmap && !isLoadingRoadmaps && (
-            <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center text-sm text-purple-100/60">
+            <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center text-sm text-purple-100/60">
               Выберите роудмап, чтобы увидеть его задачи.
             </div>
           )}
 
           {selectedRoadmap && (
-            <div className="space-y-5">
+            <div className="flex min-h-0 flex-1 flex-col gap-5">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-purple-200/70">Активный роудмап</p>
-                    <h2 className="mt-2 text-2xl font-bold text-purple-50">
-                      {selectedRoadmap.goal?.title ?? `Роудмап #${selectedRoadmap.roadmap_id}`}
-                    </h2>
-                    {selectedRoadmap.goal?.description && (
-                      <p className="mt-2 max-w-3xl text-sm text-purple-100/75">
-                        {selectedRoadmap.goal.description}
-                      </p>
+                    {!isEditingGoal ? (
+                      <>
+                        <h2 className="mt-2 text-2xl font-bold text-purple-50">
+                          {selectedRoadmap.goal?.title ?? `Роудмап #${selectedRoadmap.roadmap_id}`}
+                        </h2>
+                        {selectedRoadmap.goal?.description && (
+                          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-purple-100/75">
+                            {selectedRoadmap.goal.description}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <div className="mt-3 max-w-3xl space-y-3">
+                        <input
+                          value={goalTitleDraft}
+                          onChange={(event) => setGoalTitleDraft(event.target.value)}
+                          className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                          placeholder="Название цели"
+                          disabled={isSavingGoal}
+                        />
+                        <textarea
+                          value={goalDescriptionDraft}
+                          onChange={(event) => setGoalDescriptionDraft(event.target.value)}
+                          className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                          placeholder="Описание цели (необязательно)"
+                          rows={4}
+                          disabled={isSavingGoal}
+                        />
+                      </div>
                     )}
                   </div>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/75">
-                    <p>Статус: {selectedRoadmap.completed ? 'Завершен' : 'В процессе'}</p>
-                    <p className="mt-1">Задач: {selectedTasks?.length ?? selectedRoadmap.tasks.length}</p>
+                  <div className="flex flex-wrap items-start justify-end gap-3">
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/75">
+                      <p>Статус: {selectedRoadmap.completed ? 'Завершен' : 'В процессе'}</p>
+                      <p className="mt-1">Задач: {selectedTasks?.length ?? selectedRoadmap.tasks.length}</p>
+                    </div>
+
+                    {!isEditingGoal ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingGoal(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-100 transition hover:bg-white/10"
+                        disabled={isSavingGoal}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Изменить цель
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveGoal()}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-3 text-sm text-purple-50 transition hover:bg-purple-500/30"
+                          disabled={isSavingGoal}
+                        >
+                          <Save className={`h-4 w-4 ${isSavingGoal ? 'animate-pulse' : ''}`} />
+                          Сохранить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingGoal(false);
+                            setGoalTitleDraft(selectedRoadmap.goal?.title ?? '');
+                            setGoalDescriptionDraft(selectedRoadmap.goal?.description ?? '');
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-100 transition hover:bg-white/10"
+                          disabled={isSavingGoal}
+                        >
+                          <X className="h-4 w-4" />
+                          Отмена
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div>
+              <div className="flex min-h-0 flex-1 flex-col">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-medium text-purple-100/80">Задачи роудмапа</p>
                   {isLoadingTasks && (
@@ -266,38 +585,151 @@ const Roadmaps: React.FC = () => {
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  {sortTasks(selectedTasks ?? selectedRoadmap.tasks).map((task) => (
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-purple-50">Новая задача</p>
+                        <p className="mt-1 text-xs text-purple-100/60">Добавьте задачу в текущий роудмап.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateTask()}
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-2 text-sm text-purple-50 transition hover:bg-purple-500/30"
+                        disabled={isCreatingTask || isLoadingTasks}
+                      >
+                        <Plus className={`h-4 w-4 ${isCreatingTask ? 'animate-pulse' : ''}`} />
+                        Создать
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid gap-3">
+                      <input
+                        value={newTaskTitle}
+                        onChange={(event) => setNewTaskTitle(event.target.value)}
+                        className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                        placeholder="Название задачи"
+                        disabled={isCreatingTask || isLoadingTasks}
+                      />
+                      <textarea
+                        value={newTaskDescription}
+                        onChange={(event) => setNewTaskDescription(event.target.value)}
+                        className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                        placeholder="Описание (необязательно)"
+                        rows={3}
+                        disabled={isCreatingTask || isLoadingTasks}
+                      />
+                    </div>
+                  </div>
+
+                  {visibleTasks.map((task) => (
                     <div
                       key={task.task_id}
                       className="rounded-2xl border border-white/10 bg-black/20 p-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
-                          {task.completed ? (
-                            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-400" />
-                          ) : (
-                            <Circle className="mt-0.5 h-5 w-5 text-purple-300" />
-                          )}
-                          <div>
-                            <p className="font-medium text-purple-50">
-                              {task.order_index + 1}. {task.title}
-                            </p>
-                            {task.description && (
-                              <p className="mt-1 text-sm text-purple-100/70">{task.description}</p>
+                          <button
+                            type="button"
+                            onClick={() => void handleToggleTaskComplete(task)}
+                            className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-purple-100/80 transition hover:bg-white/10"
+                            disabled={Boolean(taskBusyIds[task.task_id])}
+                            aria-label={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
+                          >
+                            {task.completed ? (
+                              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-purple-300" />
+                            )}
+                          </button>
+
+                          <div className="min-w-0">
+                            {editingTaskId !== task.task_id ? (
+                              <>
+                                <p className="font-medium text-purple-50">
+                                  {task.order_index + 1}. {task.title}
+                                </p>
+                                {task.description && (
+                                  <p className="mt-1 text-sm leading-relaxed text-purple-100/70">{task.description}</p>
+                                )}
+                              </>
+                            ) : (
+                              <div className="space-y-2">
+                                <input
+                                  value={editTaskTitle}
+                                  onChange={(event) => setEditTaskTitle(event.target.value)}
+                                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                                  placeholder="Название"
+                                  disabled={Boolean(taskBusyIds[task.task_id])}
+                                />
+                                <textarea
+                                  value={editTaskDescription}
+                                  onChange={(event) => setEditTaskDescription(event.target.value)}
+                                  className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                                  placeholder="Описание (необязательно)"
+                                  rows={3}
+                                  disabled={Boolean(taskBusyIds[task.task_id])}
+                                />
+                              </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70">
-                          <p>{task.completed ? 'Выполнено' : 'Не выполнено'}</p>
-                          <p className="mt-1">Создано: {formatDate(task.created_at)}</p>
+                        <div className="flex flex-wrap items-start justify-end gap-2">
+                          {editingTaskId !== task.task_id ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => startEditTask(task)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                                disabled={Boolean(taskBusyIds[task.task_id])}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                Изменить
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDeleteTask(task)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                                disabled={Boolean(taskBusyIds[task.task_id])}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Удалить
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void handleSaveTask(task)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-purple-500/20 px-3 py-2 text-xs text-purple-50 transition hover:bg-purple-500/30"
+                                disabled={Boolean(taskBusyIds[task.task_id])}
+                              >
+                                <Save className="h-4 w-4" />
+                                Сохранить
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEditTask}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                                disabled={Boolean(taskBusyIds[task.task_id])}
+                              >
+                                <X className="h-4 w-4" />
+                                Отмена
+                              </button>
+                            </>
+                          )}
+
+                          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70">
+                            <p>{task.completed ? 'Выполнено' : 'Не выполнено'}</p>
+                            <p className="mt-1">Создано: {formatDate(task.created_at)}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
 
-                  {!isLoadingTasks && sortTasks(selectedTasks ?? selectedRoadmap.tasks).length === 0 && (
+                  {!isLoadingTasks && visibleTasks.length === 0 && (
                     <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-sm text-purple-100/60">
                       У этого роудмапа пока нет задач.
                     </div>
