@@ -19,7 +19,7 @@ import Profile from './src/pages/app/Profile.tsx';
 import AppNotFound from './src/pages/app/AppNotFound.tsx';
 import Search from './src/pages/app/Search.tsx';
 import ChangePassword from './src/pages/app/ChangePassword.tsx';
-import { isAuthenticatedSession } from './src/api/auth.ts';
+import { isAuthenticatedSession } from './src/api/auth/session.ts';
 
 function isAuthenticated(): boolean {
   return isAuthenticatedSession();
