@@ -9,9 +9,8 @@ import {
   setRoadmapTaskComplete,
   updateRoadmapGoal,
   updateRoadmapTask,
-  type RoadmapItem,
-  type RoadmapTask,
-} from '../../api/roadmaps';
+} from '../../api/roadmaps/roadmapApi';
+import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
 
 function formatDate(dateValue: string): string {
   const date = new Date(dateValue);

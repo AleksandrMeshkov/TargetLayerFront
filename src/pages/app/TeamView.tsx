@@ -15,8 +15,8 @@ import {
 	getMyRoadmaps,
 	getRoadmapsByTeam,
 	shareRoadmapToTeam,
-	type RoadmapItem,
-} from '../../api/roadmaps';
+} from '../../api/roadmaps/roadmapApi';
+import type { RoadmapItem } from '../../types/roadmapsTypes/roadmapsTypes';
 
 type TeamLocationState = {
 	teamName?: string;

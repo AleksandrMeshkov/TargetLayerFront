@@ -1,94 +1,7 @@
-import { fetchWithAuthRetry } from './auth';
-
-type ApiErrorResponse = {
-  detail?: string;
-};
-
-export type RoadmapGoal = {
-  goals_id: number;
-  user_id: number;
-  title: string;
-  description?: string | null;
-  created_at: string;
-};
-
-export type RoadmapTask = {
-  task_id: number;
-  title: string;
-  description?: string | null;
-  order_index: number;
-  completed: boolean;
-  completed_at?: string | null;
-  created_at: string;
-};
-
-export type RoadmapItem = {
-  roadmap_id: number;
-  team_id?: number | null;
-  goals_id: number;
-  goal?: RoadmapGoal | null;
-  tasks: RoadmapTask[];
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type TaskCreatePayload = {
-  title: string;
-  description?: string | null;
-  order_index?: number;
-};
-
-export type TaskUpdatePayload = {
-  title?: string | null;
-  description?: string | null;
-  order_index?: number | null;
-  completed?: boolean | null;
-};
-
-export type GoalUpdatePayload = {
-  title: string;
-  description?: string | null;
-};
-
-export type GoalUpdateResponse = {
-  status?: string;
-  message?: string;
-  detail?: string;
-  goal?: {
-    goals_id: number;
-    title: string;
-    description?: string | null;
-  };
-};
-
-export type RoadmapsListResponse = {
-  roadmaps: RoadmapItem[];
-  total: number;
-};
-
-export type ShareRoadmapPayload = {
-  team_id: number;
-};
-
-export type ShareRoadmapResponse = {
-  status?: string;
-  message?: string;
-  detail?: string;
-};
-
-async function parseError(response: Response, fallbackMessage: string): Promise<string> {
-  let errorMessage = fallbackMessage;
-  try {
-    const errorPayload = (await response.json()) as ApiErrorResponse;
-    if (errorPayload?.detail) {
-      errorMessage = errorPayload.detail;
-    }
-  } catch {
-    errorMessage = `Ошибка ${response.status}`;
-  }
-  return errorMessage;
-}
+import { fetchWithAuthRetry } from '../auth';
+import { parseApiError } from '../../utils/api/parseApiError';
+import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
+} from '../../types/roadmapsTypes/roadmapsTypes';
 
 export async function getMyRoadmaps(): Promise<RoadmapsListResponse> {
   const response = await fetchWithAuthRetry('/api/v1/roadmaps/my-roadmaps', {
@@ -99,7 +12,7 @@ export async function getMyRoadmaps(): Promise<RoadmapsListResponse> {
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось загрузить роудмапы'));
+    throw new Error(await parseApiError(response, 'Не удалось загрузить роудмапы'));
   }
 
   return (await response.json()) as RoadmapsListResponse;
@@ -114,7 +27,7 @@ export async function getRoadmapTasks(roadmapId: number): Promise<RoadmapTask[]>
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось загрузить задачи роудмапа'));
+    throw new Error(await parseApiError(response, 'Не удалось загрузить задачи роудмапа'));
   }
 
   return (await response.json()) as RoadmapTask[];
@@ -129,7 +42,7 @@ export async function getRoadmapsByTeam(teamId: number): Promise<RoadmapsListRes
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось загрузить роудмапы команды'));
+    throw new Error(await parseApiError(response, 'Не удалось загрузить роудмапы команды'));
   }
 
   return (await response.json()) as RoadmapsListResponse;
@@ -148,7 +61,7 @@ export async function shareRoadmapToTeam(
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось поделиться роудмапом с командой'));
+    throw new Error(await parseApiError(response, 'Не удалось поделиться роудмапом с командой'));
   }
 
   return (await response.json()) as ShareRoadmapResponse;
@@ -167,7 +80,7 @@ export async function createRoadmapTask(
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось создать задачу'));
+    throw new Error(await parseApiError(response, 'Не удалось создать задачу'));
   }
 
   return (await response.json()) as RoadmapTask;
@@ -187,7 +100,7 @@ export async function updateRoadmapTask(
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось обновить задачу'));
+    throw new Error(await parseApiError(response, 'Не удалось обновить задачу'));
   }
 
   return (await response.json()) as RoadmapTask;
@@ -202,7 +115,7 @@ export async function deleteRoadmapTask(roadmapId: number, taskId: number): Prom
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось удалить задачу'));
+    throw new Error(await parseApiError(response, 'Не удалось удалить задачу'));
   }
 }
 
@@ -222,7 +135,7 @@ export async function setRoadmapTaskComplete(
   );
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось обновить статус задачи'));
+    throw new Error(await parseApiError(response, 'Не удалось обновить статус задачи'));
   }
 
   return (await response.json()) as RoadmapTask;
@@ -241,7 +154,7 @@ export async function updateRoadmapGoal(
   });
 
   if (!response.ok) {
-    throw new Error(await parseError(response, 'Не удалось обновить цель'));
+    throw new Error(await parseApiError(response, 'Не удалось обновить цель'));
   }
 
   return (await response.json()) as GoalUpdateResponse;
