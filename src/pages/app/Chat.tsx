@@ -8,11 +8,13 @@ import {
   deleteAIConversation,
   getAIConversations,
   getAIHistory,
-  type AIConversationItem,
-  type AIHistoryConversation,
-  type AIHistoryMessage,
-  type AIRoadmapResponse,
-} from '../../api/ai';
+} from '../../api/ai/aiChatClient';
+import type {
+  AIConversationItem,
+  AIHistoryConversation,
+  AIHistoryMessage,
+  AIRoadmapResponse,
+} from '../../types/aiTypes/aiTypes';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 
 type ChatMessage = {
