@@ -8,10 +8,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './src/pages/Home.tsx';
 import Login from './src/pages/Login.tsx';
 import Register from './src/pages/Register.tsx';
+import ForgotPassword from './src/pages/ForgotPassword.tsx';
+import ResetPassword from './src/pages/ResetPassword.tsx';
 import NotFound from './src/pages/NotFound.tsx';
 import AppLayout from './src/components/AppLayout.tsx';
 import Dashboard from './src/pages/app/Dashboard.tsx';
 import Chat from './src/pages/app/Chat.tsx';
+import ChatForUser from './src/pages/app/ChatForUser.tsx';
 import Roadmaps from './src/pages/app/Roadmaps.tsx';
 import Teams from './src/pages/app/Teams.tsx';
 import TeamView from './src/pages/app/TeamView.tsx';
@@ -70,6 +73,24 @@ const App: React.FC = () => {
             />
 
             <Route
+              path="/forgot-password"
+              element={(
+                <PublicOnlyRoute>
+                  <ForgotPassword />
+                </PublicOnlyRoute>
+              )}
+            />
+
+            <Route
+              path="/reset-password"
+              element={(
+                <PublicOnlyRoute>
+                  <ResetPassword />
+                </PublicOnlyRoute>
+              )}
+            />
+
+            <Route
               path="/app"
               element={(
                 <ProtectedRoute>
@@ -80,6 +101,7 @@ const App: React.FC = () => {
               <Route index element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
               <Route path="chat" element={<Chat />} />
+              <Route path="chats" element={<ChatForUser />} />
               <Route path="roadmaps" element={<Roadmaps />} />
               <Route path="teams" element={<Teams />} />
               <Route path="teams/:teamId" element={<TeamView />} />

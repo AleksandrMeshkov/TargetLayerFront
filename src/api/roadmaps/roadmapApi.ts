@@ -159,3 +159,16 @@ export async function updateRoadmapGoal(
 
   return (await response.json()) as GoalUpdateResponse;
 }
+
+export async function deleteRoadmap(roadmapId: number): Promise<void> {
+  const response = await fetchWithAuthRetry(`/api/v1/roadmaps/${roadmapId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось удалить роудмап'));
+  }
+}

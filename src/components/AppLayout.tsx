@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, MessageCircle, Map, Menu, Search, Shield, UserRound, X } from 'lucide-react';
+import { Bot, LogOut, MessageCircle, Map, Menu, Search, Shield, UserRound, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { logoutUser } from '../api/auth/client';
 import { clearAuthSession } from '../api/auth/session';
@@ -31,7 +31,8 @@ const AppLayout: React.FC = () => {
     { label: 'Профиль', href: '/app/profile', icon: UserRound },
     { label: 'Команды', href: '/app/teams', icon: Shield },
     { label: 'Поиск пользователей', href: '/app/search', icon: Search },
-    { label: 'АИ чат', href: '/app/chat', icon: MessageCircle },
+    { label: 'Чаты', href: '/app/chats', icon: MessageCircle },
+    { label: 'АИ чат', href: '/app/chat', icon: Bot },
     { label: 'Роудмапы', href: '/app/roadmaps', icon: Map },
   ];
 
@@ -46,7 +47,7 @@ const AppLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#080512] text-white flex flex-col">
       <header className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -107,7 +108,7 @@ const AppLayout: React.FC = () => {
           <div
             className={isTeamWorkspaceRoute
               ? 'flex min-h-0 flex-1 flex-col w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4'
-              : 'mx-auto flex min-h-0 flex-1 flex-col w-full max-w-7xl px-6 py-10'}
+              : 'flex min-h-0 flex-1 flex-col w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10'}
           >
             <Outlet context={{ sidebarOpen, setSidebarOpen }} />
           </div>

@@ -10,6 +10,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/uploads': {
+        target: 'https://targetl.site',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   esbuild: {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Search as SearchIcon, UserPlus, Users, X } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../../api/apiBase/apiBase';
 import {
 	getCurrentProfile,
 	searchUsers,
@@ -13,9 +14,7 @@ const ADMIN_TEAM_ROLE_ID = 1;
 const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
 	if (!avatarPath) return null;
 	if (avatarPath.startsWith('http')) return avatarPath;
-
-	const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'https://targetl.site').replace(/\/$/, '');
-	return `${baseUrl}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+	return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
 };
 
 const getFullName = (user: SearchUser): string => {

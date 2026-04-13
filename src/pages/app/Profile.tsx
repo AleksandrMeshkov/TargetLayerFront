@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { UserProfile } from '../../types/authTypes/authTypes';
 import { getCurrentProfile, updateUserName, updateUserProfile } from '../../api/auth/userClient';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../../api/apiBase/apiBase';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -23,8 +24,7 @@ const Profile: React.FC = () => {
       return avatarPath;
     }
     
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'https://targetl.site';
-    return `${baseUrl}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+    return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
   };
 
   useEffect(() => {
@@ -196,10 +196,10 @@ const Profile: React.FC = () => {
                   console.error('Ошибка загрузки изображения:', e);
                   e.currentTarget.style.display = 'none';
                 }}
-                className="h-24 w-24 shrink-0 rounded-full border border-purple-400/30 object-cover shadow-lg shadow-purple-500/30"
+                className="h-36 w-36 shrink-0 rounded-full border border-purple-400/30 object-cover shadow-lg shadow-purple-500/30"
               />
             ) : (
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-4xl font-semibold text-white shadow-lg shadow-purple-500/30">
+              <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-6xl font-semibold text-white shadow-lg shadow-purple-500/30">
                 {getInitials()}
               </div>
             );
@@ -210,9 +210,9 @@ const Profile: React.FC = () => {
               type="button"
               onClick={handleUploadPhotoClick}
               disabled={uploading}
-              className="flex items-center gap-2 text-sm font-medium text-purple-200 transition-colors hover:text-purple-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 text-base font-medium text-purple-200 transition-colors hover:text-purple-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="h-5 w-5" />
               {uploading ? 'Загрузка...' : 'Загрузить фото'}
             </button>
 
@@ -227,44 +227,44 @@ const Profile: React.FC = () => {
 
             <div className="space-y-2">
               <div>
-                <label className="block text-xs font-medium text-purple-200 mb-1">ФИО</label>
+                <label className="mb-1 block text-sm font-medium text-purple-200">ФИО</label>
                 {!isNameEditing ? (
                   <input
                     type="text"
                     value={getFullName()}
                     readOnly
                     onClick={handleStartNameEdit}
-                    className="w-full cursor-pointer rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none transition-colors hover:border-purple-400/40 sm:w-80"
+                    className="w-full cursor-pointer rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none transition-colors hover:border-purple-400/40 sm:w-96"
                   />
                 ) : (
-                  <div className="space-y-2 sm:w-80">
+                  <div className="space-y-2 sm:w-96">
                     <input
                       type="text"
                       value={nameDraft.surname}
                       onChange={(e) => setNameDraft((prev) => ({ ...prev, surname: e.target.value }))}
                       placeholder="Фамилия"
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
                     />
                     <input
                       type="text"
                       value={nameDraft.name}
                       onChange={(e) => setNameDraft((prev) => ({ ...prev, name: e.target.value }))}
                       placeholder="Имя"
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
                     />
                     <input
                       type="text"
                       value={nameDraft.patronymic}
                       onChange={(e) => setNameDraft((prev) => ({ ...prev, patronymic: e.target.value }))}
                       placeholder="Отчество (опционально)"
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+                      className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
                     />
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={handleSaveName}
                         disabled={savingName}
-                        className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
+                        className="rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
                       >
                         {savingName ? 'Сохранение...' : 'Сохранить'}
                       </button>
@@ -272,7 +272,7 @@ const Profile: React.FC = () => {
                         type="button"
                         onClick={handleCancelNameEdit}
                         disabled={savingName}
-                        className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs font-semibold text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
+                        className="rounded-lg border border-white/10 bg-black/20 px-4 py-2.5 text-sm font-semibold text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
                       >
                         Отмена
                       </button>
@@ -282,12 +282,12 @@ const Profile: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-purple-200 mb-1">Никнейм</label>
+                <label className="mb-1 block text-sm font-medium text-purple-200">Никнейм</label>
                 <input
                   type="text"
                   value={profile.username || ''}
                   readOnly
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40 sm:w-80"
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40 sm:w-96"
                 />
               </div>
             </div>
@@ -298,9 +298,9 @@ const Profile: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/app/change-password')}
-            className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-200 transition-colors hover:bg-white/10"
+            className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-5 py-4 text-base text-purple-200 transition-colors hover:bg-white/10"
           >
-            <KeyRound className="h-4 w-4 text-purple-300" />
+            <KeyRound className="h-5 w-5 text-purple-300" />
             Сменить пароль
           </button>
         </nav>

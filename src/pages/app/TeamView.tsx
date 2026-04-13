@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../../api/apiBase/apiBase';
 import {
 	getCurrentProfile,
 	getUserById,
@@ -31,8 +32,7 @@ type TeamMemberView = {
 const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
 	if (!avatarPath) return null;
 	if (avatarPath.startsWith('http')) return avatarPath;
-	const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'https://targetl.site').replace(/\/$/, '');
-	return `${baseUrl}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+	return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
 };
 
 const getFullName = (profile: UserProfile): string => {

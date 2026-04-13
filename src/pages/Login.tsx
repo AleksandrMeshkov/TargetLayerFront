@@ -62,7 +62,7 @@ export default function Login() {
         <div className="space-y-2">
           <div className="flex justify-between items-center px-1">
             <label className="text-xs font-medium text-purple-200/70">Пароль</label>
-            <button type="button" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Забыли пароль?</button>
+            <Link to="/forgot-password" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Забыли пароль?</Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
