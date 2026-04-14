@@ -1,0 +1,17 @@
+node_modules
+# Vite build output
+/dist
+
+# VCS
+.git
+
+# Local tooling
+.vscode
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker artifacts
+**/*.tar
