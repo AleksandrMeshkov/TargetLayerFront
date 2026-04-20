@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
+import { CheckCircle2, Circle, LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../../api/apiBase/apiBase';
@@ -16,9 +16,11 @@ import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authType
 import {
 	getMyRoadmaps,
 	getRoadmapsByTeam,
+	getRoadmapTasks,
+	setRoadmapTaskComplete,
 	shareRoadmapToTeam,
 } from '../../api/roadmaps/roadmapApi';
-import type { RoadmapItem } from '../../types/roadmapsTypes/roadmapsTypes';
+import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
 
 type TeamLocationState = {
 	teamName?: string;
@@ -64,6 +66,10 @@ const formatDate = (value: string): string => {
 	}).format(date);
 };
 
+const sortTasks = (tasks: RoadmapTask[]): RoadmapTask[] => {
+	return [...tasks].sort((left, right) => left.order_index - right.order_index);
+};
+
 const TeamView: React.FC = () => {
 	const navigate = useNavigate();
 	const { teamId } = useParams<{ teamId: string }>();
@@ -82,6 +88,10 @@ const TeamView: React.FC = () => {
 	const [myUserId, setMyUserId] = useState<number | null>(null);
 	const [teamRoadmaps, setTeamRoadmaps] = useState<RoadmapItem[]>([]);
 	const [isLoadingTeamRoadmaps, setIsLoadingTeamRoadmaps] = useState(false);
+	const [selectedTeamRoadmapId, setSelectedTeamRoadmapId] = useState<number | null>(null);
+	const [teamTasksCache, setTeamTasksCache] = useState<Record<number, RoadmapTask[]>>({});
+	const [isLoadingTeamRoadmapTasks, setIsLoadingTeamRoadmapTasks] = useState(false);
+	const [teamTaskBusyIds, setTeamTaskBusyIds] = useState<Record<number, boolean>>({});
 	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 	const [myRoadmaps, setMyRoadmaps] = useState<RoadmapItem[]>([]);
 	const [isLoadingMyRoadmaps, setIsLoadingMyRoadmaps] = useState(false);
@@ -101,6 +111,20 @@ const TeamView: React.FC = () => {
 	}, [members, myUserId]);
 
 	const isAdmin = myMembership?.membership.team_role_id === 1;
+
+	const selectedTeamRoadmap = useMemo(
+		() => teamRoadmaps.find((roadmap) => roadmap.roadmap_id === selectedTeamRoadmapId) ?? null,
+		[teamRoadmaps, selectedTeamRoadmapId],
+	);
+
+	const visibleTeamRoadmapTasks = useMemo(() => {
+		if (!selectedTeamRoadmap) {
+			return [];
+		}
+
+		const cached = selectedTeamRoadmapId != null ? teamTasksCache[selectedTeamRoadmapId] : undefined;
+		return sortTasks(cached ?? selectedTeamRoadmap.tasks ?? []);
+	}, [selectedTeamRoadmap, selectedTeamRoadmapId, teamTasksCache]);
 
 	const loadTeamRoadmaps = async () => {
 		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
@@ -168,6 +192,86 @@ const TeamView: React.FC = () => {
 		fetchMembers();
 		loadTeamRoadmaps();
 	}, []);
+
+	useEffect(() => {
+		setSelectedTeamRoadmapId(null);
+		setIsLoadingTeamRoadmapTasks(false);
+	}, [numericTeamId]);
+
+	const handleSelectTeamRoadmap = async (roadmapId: number): Promise<void> => {
+		if (selectedTeamRoadmapId === roadmapId) {
+			setSelectedTeamRoadmapId(null);
+			return;
+		}
+
+		setSelectedTeamRoadmapId(roadmapId);
+
+		if (teamTasksCache[roadmapId]) {
+			return;
+		}
+
+		setIsLoadingTeamRoadmapTasks(true);
+		try {
+			const tasks = await getRoadmapTasks(roadmapId);
+			setTeamTasksCache((prev) => ({ ...prev, [roadmapId]: sortTasks(tasks) }));
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось загрузить задачи роудмапа';
+			toast.error(message);
+		} finally {
+			setIsLoadingTeamRoadmapTasks(false);
+		}
+	};
+
+	const setTeamTaskBusy = (taskId: number, busy: boolean) => {
+		setTeamTaskBusyIds((prev) => ({ ...prev, [taskId]: busy }));
+	};
+
+	const updateTeamRoadmapTasksState = (roadmapId: number, updater: (tasks: RoadmapTask[]) => RoadmapTask[]) => {
+		setTeamRoadmaps((prev) => prev.map((item) => {
+			if (item.roadmap_id !== roadmapId) {
+				return item;
+			}
+			return {
+				...item,
+				tasks: updater(item.tasks),
+			};
+		}));
+	};
+
+	const updateCachedTeamTask = (roadmapId: number, updatedTask: RoadmapTask) => {
+		setTeamTasksCache((prev) => {
+			const current = prev[roadmapId];
+			if (!current) {
+				return prev;
+			}
+			return {
+				...prev,
+				[roadmapId]: current.map((task) => (task.task_id === updatedTask.task_id ? updatedTask : task)),
+			};
+		});
+
+		updateTeamRoadmapTasksState(roadmapId, (tasks) => tasks.map((task) => (
+			task.task_id === updatedTask.task_id ? updatedTask : task
+		)));
+	};
+
+	const handleToggleTeamTaskComplete = async (task: RoadmapTask): Promise<void> => {
+		if (selectedTeamRoadmapId == null) {
+			return;
+		}
+
+		const nextCompleted = !task.completed;
+		setTeamTaskBusy(task.task_id, true);
+		try {
+			const updated = await setRoadmapTaskComplete(selectedTeamRoadmapId, task.task_id, nextCompleted);
+			updateCachedTeamTask(selectedTeamRoadmapId, updated);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось обновить статус задачи';
+			toast.error(message);
+		} finally {
+			setTeamTaskBusy(task.task_id, false);
+		}
+	};
 
 	const handleOpenTeamPanel = async () => {
 		setIsModalOpen(true);
@@ -364,12 +468,19 @@ const TeamView: React.FC = () => {
 							)}
 
 							{!isLoadingTeamRoadmaps && teamRoadmaps.length > 0 && (
-								<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-									{teamRoadmaps.map((roadmap) => (
-										<article
-											key={roadmap.roadmap_id}
-											className="rounded-xl border border-white/10 bg-black/20 p-4"
-										>
+								<>
+									<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+										{teamRoadmaps.map((roadmap) => {
+											const isSelected = roadmap.roadmap_id === selectedTeamRoadmapId;
+											return (
+												<button
+													key={roadmap.roadmap_id}
+													type="button"
+													onClick={() => void handleSelectTeamRoadmap(roadmap.roadmap_id)}
+													className={`w-full rounded-xl border bg-black/20 p-4 text-left transition-colors hover:border-purple-500/30 ${
+														isSelected ? 'border-purple-400/60' : 'border-white/10'
+													}`}
+												>
 											<div className="flex items-start justify-between gap-3">
 												<div>
 													<p className="text-xs uppercase tracking-wide text-purple-200/70">Роудмап #{roadmap.roadmap_id}</p>
@@ -390,9 +501,93 @@ const TeamView: React.FC = () => {
 												<span>{roadmap.completed ? 'Завершен' : 'В процессе'}</span>
 												<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
 											</div>
-										</article>
-									))}
-								</div>
+											</button>
+										);
+										})}
+									</div>
+
+									{selectedTeamRoadmap && (
+										<div className="mt-4 rounded-xl border border-white/10 bg-black/15 p-4">
+											<div className="flex flex-wrap items-start justify-between gap-4">
+												<div>
+													<p className="text-xs uppercase tracking-wide text-purple-200/70">Открытый роудмап</p>
+													<h3 className="mt-2 text-lg font-semibold text-white">
+														{selectedTeamRoadmap.goal?.title ?? `Роудмап #${selectedTeamRoadmap.roadmap_id}`}
+													</h3>
+													{selectedTeamRoadmap.goal?.description && (
+														<p className="mt-2 max-w-3xl text-sm text-purple-100/70">
+															{selectedTeamRoadmap.goal.description}
+														</p>
+													)}
+												</div>
+
+											<button
+												type="button"
+												onClick={() => setSelectedTeamRoadmapId(null)}
+												className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
+												aria-label="Закрыть роудмап"
+											>
+												<X className="h-4 w-4" />
+											</button>
+										</div>
+
+										<div className="mt-4">
+											<div className="mb-3 flex items-center justify-between gap-3">
+												<p className="text-sm font-medium text-purple-100/80">Задачи роудмапа</p>
+												{isLoadingTeamRoadmapTasks && (
+													<span className="inline-flex items-center gap-2 text-xs text-purple-200/70">
+														<LoaderCircle className="h-4 w-4 animate-spin" />
+														Загружаю задачи...
+													</span>
+												)}
+											</div>
+
+											{!isLoadingTeamRoadmapTasks && visibleTeamRoadmapTasks.length === 0 && (
+												<div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 text-sm text-purple-100/60">
+													В этом роудмапе пока нет задач.
+												</div>
+											)}
+
+											<div className="space-y-3">
+												{visibleTeamRoadmapTasks.map((task) => (
+													<div
+														key={task.task_id}
+														className="rounded-2xl border border-white/10 bg-black/20 p-4"
+													>
+														<div className="flex flex-wrap items-start justify-between gap-3">
+															<div className="flex items-start gap-3">
+																	<button
+																		type="button"
+																		onClick={() => void handleToggleTeamTaskComplete(task)}
+																		disabled={Boolean(teamTaskBusyIds[task.task_id])}
+																		className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-purple-100/80 transition hover:bg-white/10 disabled:opacity-60"
+																		aria-label={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
+																		title={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
+																	>
+																	{task.completed ? (
+																		<CheckCircle2 className="h-5 w-5 text-emerald-400" />
+																	) : (
+																		<Circle className="h-5 w-5 text-purple-300" />
+																	)}
+																	</button>
+
+																<div className="min-w-0">
+																	<p className="font-medium text-purple-50">
+																		{task.order_index + 1}. {task.title}
+																	</p>
+																	{task.description && (
+																		<p className="mt-1 text-sm leading-relaxed text-purple-100/70">{task.description}</p>
+																	)}
+																</div>
+															</div>
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
+									</div>
+								)}
+								</>
 							)}
 						</div>
 					</div>
