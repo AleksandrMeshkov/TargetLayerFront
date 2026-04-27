@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, LoaderCircle, Map, Shield, Users, X } from 'lucide-react';
+import { CheckCircle2, Circle, LoaderCircle, Map, MessageCircle, Shield, Users, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../../api/apiBase/apiBase';
@@ -13,6 +13,7 @@ import {
 	renameTeam,
 } from '../../api/auth/teamClient';
 import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
+import { createChat, getMyChats, getOrCreateTeamChat } from '../../api/chat/chatClient';
 import {
 	getMyRoadmaps,
 	getRoadmapsByTeam,
@@ -97,6 +98,7 @@ const TeamView: React.FC = () => {
 	const [isLoadingMyRoadmaps, setIsLoadingMyRoadmaps] = useState(false);
 	const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
 	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
+	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
 
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
@@ -111,6 +113,11 @@ const TeamView: React.FC = () => {
 	}, [members, myUserId]);
 
 	const isAdmin = myMembership?.membership.team_role_id === 1;
+	const isTeamChatDisabled = (
+		isOpeningTeamChat
+		|| !Number.isFinite(numericTeamId)
+		|| numericTeamId <= 0
+	);
 
 	const selectedTeamRoadmap = useMemo(
 		() => teamRoadmaps.find((roadmap) => roadmap.roadmap_id === selectedTeamRoadmapId) ?? null,
@@ -395,6 +402,67 @@ const TeamView: React.FC = () => {
 		}
 	};
 
+	const handleOpenTeamChat = async () => {
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			toast.error('Некорректный идентификатор команды');
+			return;
+		}
+		if (isOpeningTeamChat) {
+			return;
+		}
+
+		setIsOpeningTeamChat(true);
+		try {
+			const chat = await getOrCreateTeamChat(numericTeamId);
+			navigate('/app/chats', { state: { openChatId: chat.chat_id, openTeamId: numericTeamId } });
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось открыть беседу команды';
+
+			if (message === 'Method Not Allowed') {
+				try {
+					const myChats = await getMyChats();
+					const existingTeamChat = myChats.chats.find((chat) => (
+						chat.team_id === numericTeamId && chat.type === 'team'
+					)) ?? myChats.chats.find((chat) => chat.team_id === numericTeamId) ?? null;
+
+					if (existingTeamChat) {
+						navigate('/app/chats', { state: { openChatId: existingTeamChat.chat_id, openTeamId: numericTeamId } });
+						return;
+					}
+
+					if (!loadedOnce) {
+						await fetchMembers();
+					}
+
+					const participantIds = Array.from(
+						new Set(members.map((entry) => entry.membership.user_id).filter((id) => Number.isFinite(id) && id > 0)),
+					);
+
+					if (participantIds.length === 0) {
+						toast.error('Не удалось определить участников команды');
+						return;
+					}
+
+					const created = await createChat({
+						team_id: numericTeamId,
+						participant_user_ids: participantIds,
+						name: null,
+					});
+					navigate('/app/chats', { state: { openChatId: created.chat_id, openTeamId: numericTeamId } });
+					return;
+				} catch (fallbackErr) {
+					const fallbackMessage = fallbackErr instanceof Error ? fallbackErr.message : 'Не удалось открыть беседу команды';
+					toast.error(fallbackMessage);
+					return;
+				}
+			}
+
+			toast.error(message);
+		} finally {
+			setIsOpeningTeamChat(false);
+		}
+	};
+
 	return (
 		<section className="flex h-[calc(100dvh-96px)] min-h-[540px] flex-col">
 			<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5">
@@ -440,6 +508,15 @@ const TeamView: React.FC = () => {
 									disabled={isLoadingTeamRoadmaps}
 								>
 									{isLoadingTeamRoadmaps ? 'Обновление...' : 'Обновить'}
+								</button>
+								<button
+									type="button"
+									onClick={() => void handleOpenTeamChat()}
+									disabled={isTeamChatDisabled}
+									className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
+								>
+									<MessageCircle className="h-4 w-4" />
+									{isOpeningTeamChat ? 'Открываю...' : 'Зайти в беседу'}
 								</button>
 								{isAdmin && (
 									<button

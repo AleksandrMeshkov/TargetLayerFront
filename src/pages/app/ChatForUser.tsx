@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { MessageCircle, Plus, SendHorizontal } from 'lucide-react';
+import { useLocation, useOutletContext } from 'react-router-dom';
+import { LogOut, MessageCircle, SendHorizontal, Trash2, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
-import { getCurrentProfile } from '../../api/auth/userClient';
-import { getMyTeams } from '../../api/auth/teamClient';
-import { createChat, postChatMessage } from '../../api/chat/chatClient';
+import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
+import { deleteChatMessage, getChatParticipants, leaveChat, postChatMessage } from '../../api/chat/chatClient';
 import { useChatMessages } from '../../hooks/chatHooks/useChatMessages';
 import { useMyChats } from '../../hooks/chatHooks/useMyChats';
-import type { ChatResponse, MessageResponse } from '../../types/chatTypes/chatTypes';
-import type { TeamItem } from '../../types/authTypes/authTypes';
+import type { ChatParticipantResponse, ChatResponse, MessageResponse } from '../../types/chatTypes/chatTypes';
+import type { UserProfile } from '../../types/authTypes/authTypes';
 
 function formatDateTime(dateValue: string): string {
 	const date = new Date(dateValue);
@@ -24,59 +23,62 @@ function formatDateTime(dateValue: string): string {
 	}).format(date);
 }
 
-function parseUserIds(rawValue: string): number[] {
-	return rawValue
-		.split(/[,\s]+/)
-		.map((part) => part.trim())
-		.filter(Boolean)
-		.map((part) => Number(part))
-		.filter((value) => Number.isFinite(value) && value > 0)
-		.map((value) => Math.trunc(value));
+function formatFullName(profile: Pick<UserProfile, 'surname' | 'name' | 'patronymic'>): string {
+	return [profile.surname, profile.name, profile.patronymic].filter(Boolean).join(' ').trim();
 }
+
+function formatUsername(profile: Pick<UserProfile, 'username'>): string {
+	const raw = profile.username?.trim();
+	if (!raw) return '—';
+	return raw.startsWith('@') ? raw : `@${raw}`;
+}
+
+type ChatLocationState = {
+	openChatId?: number | null;
+};
 
 const ChatForUser: React.FC = () => {
 	useOutletContext<AppLayoutOutletContext>();
+	const location = useLocation();
+	const { openChatId } = (location.state as ChatLocationState | null) ?? {};
 
 	const { data: myChatsData, isLoading: isChatsLoading, loadMyChats } = useMyChats();
 	const { data: messagesData, isLoading: isMessagesLoading, loadMessages, setData: setMessagesData } = useChatMessages();
 
-	const [teams, setTeams] = useState<TeamItem[]>([]);
-	const [teamsLoading, setTeamsLoading] = useState(true);
-	const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
 	const [activeChatId, setActiveChatId] = useState<number | null>(null);
 	const [messageDraft, setMessageDraft] = useState('');
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-	const [isCreating, setIsCreating] = useState(false);
 	const [isSending, setIsSending] = useState(false);
+	const [deletingMessageId, setDeletingMessageId] = useState<number | null>(null);
+	const [isLeavingChat, setIsLeavingChat] = useState(false);
+	const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
+	const [participants, setParticipants] = useState<ChatParticipantResponse[]>([]);
+	const [participantsChatId, setParticipantsChatId] = useState<number | null>(null);
+	const [isParticipantsLoading, setIsParticipantsLoading] = useState(false);
+	const [participantsError, setParticipantsError] = useState<string | null>(null);
+	const [profilesByUserId, setProfilesByUserId] = useState<Record<number, UserProfile | null>>({});
 
 	useEffect(() => {
 		const loadInitial = async () => {
 			try {
-				const [profile, teamsResponse, chatsResponse] = await Promise.all([
-					getCurrentProfile(),
-					getMyTeams(),
-					loadMyChats(),
-				]);
+				const [profile, chatsResponse] = await Promise.all([getCurrentProfile(), loadMyChats()]);
 
 				setCurrentUserId(profile.user_id ?? null);
-				setTeams(teamsResponse.teams);
-				setSelectedTeamId(teamsResponse.teams[0]?.team_id ?? null);
 
-				const firstChatId = chatsResponse.chats[0]?.chat_id ?? null;
-				setActiveChatId(firstChatId);
-				if (firstChatId != null) {
-					await loadMessages(firstChatId);
+				const preferredChatId = openChatId ?? null;
+				const nextChatId = preferredChatId ?? chatsResponse.chats[0]?.chat_id ?? null;
+				setActiveChatId(nextChatId);
+				if (nextChatId != null) {
+					await loadMessages(nextChatId);
 				}
 			} catch (err) {
 				const message = err instanceof Error ? err.message : 'Не удалось загрузить чаты';
 				toast.error(message);
-			} finally {
-				setTeamsLoading(false);
 			}
 		};
 
 		void loadInitial();
-	}, [loadMessages, loadMyChats]);
+	}, [loadMessages, loadMyChats, openChatId]);
 
 	const chats = myChatsData?.chats ?? [];
 	const messages = messagesData?.messages ?? [];
@@ -90,6 +92,10 @@ const ChatForUser: React.FC = () => {
 
 	const selectChat = async (chatId: number) => {
 		setActiveChatId(chatId);
+		setIsParticipantsOpen(false);
+		setParticipants([]);
+		setParticipantsChatId(null);
+		setParticipantsError(null);
 		try {
 			await loadMessages(chatId);
 		} catch (err) {
@@ -102,6 +108,10 @@ const ChatForUser: React.FC = () => {
 		const response = await loadMyChats();
 		const nextChatId = chatIdToSelect ?? response.chats[0]?.chat_id ?? null;
 		setActiveChatId(nextChatId);
+		setIsParticipantsOpen(false);
+		setParticipants([]);
+		setParticipantsChatId(null);
+		setParticipantsError(null);
 		if (nextChatId != null) {
 			await loadMessages(nextChatId);
 		} else {
@@ -109,43 +119,66 @@ const ChatForUser: React.FC = () => {
 		}
 	};
 
-	const handleCreateChat = async () => {
-		if (selectedTeamId == null) {
-			toast.error('Нет команды для создания чата');
-			return;
-		}
-		if (isCreating) {
-			return;
-		}
-
-		const participantsRaw = window.prompt('Введите user_id участников через запятую (например: 12, 34)', '');
-		if (!participantsRaw) {
+	const loadMissingProfilesByUserIds = async (userIds: number[]) => {
+		const uniqueUserIds = Array.from(new Set(userIds.filter((id) => Number.isFinite(id) && id > 0)));
+		const missingUserIds = uniqueUserIds.filter((userId) => profilesByUserId[userId] === undefined);
+		if (missingUserIds.length === 0) {
 			return;
 		}
 
-		const participantIds = parseUserIds(participantsRaw);
-		if (participantIds.length === 0) {
-			toast.error('Не удалось распознать user_id участников');
-			return;
-		}
-
-		const nameRaw = window.prompt('Название чата (опционально)', '') ?? '';
-		const name = nameRaw.trim() || null;
-
-		setIsCreating(true);
-		try {
-			const chat = await createChat({
-				team_id: selectedTeamId,
-				participant_user_ids: participantIds,
-				name,
+		const results = await Promise.allSettled(missingUserIds.map((userId) => getUserById(userId)));
+		setProfilesByUserId((prev) => {
+			const next = { ...prev };
+			missingUserIds.forEach((userId, index) => {
+				const result = results[index];
+				next[userId] = result.status === 'fulfilled' ? result.value : null;
 			});
-			await reloadChatsAndSelect(chat.chat_id);
-			toast.success('Чат создан');
+			return next;
+		});
+	};
+
+	useEffect(() => {
+		if (activeChatId == null) {
+			return;
+		}
+
+		const senderIds = messages
+			.map((msg) => msg.user_id)
+			.filter((userId) => userId != null && userId > 0 && userId !== currentUserId);
+
+		void loadMissingProfilesByUserIds(senderIds);
+	}, [activeChatId, currentUserId, messages]);
+
+	const loadParticipants = async (chatId: number): Promise<void> => {
+		if (isParticipantsLoading) {
+			return;
+		}
+
+		setIsParticipantsLoading(true);
+		setParticipantsError(null);
+		try {
+			const response = await getChatParticipants(chatId);
+			setParticipants(response.participants);
+			setParticipantsChatId(chatId);
+			await loadMissingProfilesByUserIds(response.participants.map((entry) => entry.user_id));
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось создать чат';
-			toast.error(message);
+			const message = err instanceof Error ? err.message : 'Не удалось загрузить участников';
+			setParticipantsError(message);
 		} finally {
-			setIsCreating(false);
+			setIsParticipantsLoading(false);
+		}
+	};
+
+	const handleToggleParticipants = async () => {
+		if (activeChatId == null) {
+			return;
+		}
+
+		setIsParticipantsOpen((prev) => !prev);
+
+		const isFreshForThisChat = participantsChatId === activeChatId && participants.length > 0;
+		if (!isFreshForThisChat) {
+			await loadParticipants(activeChatId);
 		}
 	};
 
@@ -200,6 +233,67 @@ const ChatForUser: React.FC = () => {
 		}
 	};
 
+	const handleDeleteMessage = async (messageId: number) => {
+		if (activeChatId == null) {
+			return;
+		}
+		if (deletingMessageId != null) {
+			return;
+		}
+
+		const ok = window.confirm('Удалить сообщение?');
+		if (!ok) {
+			return;
+		}
+
+		setDeletingMessageId(messageId);
+		setMessagesData((prev) => {
+			const previousMessages = prev?.messages ?? [];
+			const nextMessages = previousMessages.filter((msg) => msg.message_id !== messageId);
+			return {
+				messages: nextMessages,
+				total: Math.max(0, (prev?.total ?? previousMessages.length) - 1),
+			};
+		});
+
+		try {
+			const response = await deleteChatMessage(activeChatId, messageId);
+			toast.success(response.message || 'Сообщение удалено');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось удалить сообщение';
+			toast.error(message);
+			try {
+				await loadMessages(activeChatId);
+			} catch {
+			}
+		} finally {
+			setDeletingMessageId(null);
+		}
+	};
+
+	const handleLeaveChat = async () => {
+		if (activeChatId == null || isLeavingChat) {
+			return;
+		}
+		const ok = window.confirm('Выйти из этого чата?');
+		if (!ok) {
+			return;
+		}
+
+		setIsLeavingChat(true);
+		try {
+			const response = await leaveChat(activeChatId);
+			toast.success(response.message || 'Вы вышли из чата');
+			setMessageDraft('');
+			await reloadChatsAndSelect(null);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось выйти из чата';
+			toast.error(message);
+		} finally {
+			setIsLeavingChat(false);
+		}
+	};
+
 	return (
 		<section className="relative">
 			<div className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
@@ -208,16 +302,6 @@ const ChatForUser: React.FC = () => {
 						<MessageCircle className="h-7 w-7 text-purple-300" />
 						<h1 className="text-2xl font-bold sm:text-3xl">Чаты</h1>
 					</div>
-
-					<button
-						type="button"
-						onClick={() => void handleCreateChat()}
-						disabled={teamsLoading || isCreating || selectedTeamId == null}
-						className="inline-flex items-center gap-2 rounded-xl border border-purple-400/40 bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-50 transition hover:bg-purple-500/30 disabled:opacity-60"
-					>
-						<Plus className="h-4 w-4" />
-						Создать чат
-					</button>
 				</div>
 
 				<p className="mt-3 max-w-3xl text-sm text-purple-100/70">
@@ -243,7 +327,7 @@ const ChatForUser: React.FC = () => {
 
 						{!isChatsLoading && chats.length === 0 && (
 							<p className="rounded-xl border border-dashed border-white/15 p-3 text-xs text-purple-100/60">
-								Пока нет чатов. Создайте чат с пользователем или откройте чат команды.
+								Пока нет чатов. Откройте чат команды или дождитесь добавления в групповой чат.
 							</p>
 						)}
 
@@ -285,8 +369,86 @@ const ChatForUser: React.FC = () => {
 									: 'Чат не выбран'}
 							</p>
 						</div>
-						{isSending && <p className="text-xs text-purple-200/80">Отправка...</p>}
+						<div className="flex items-center gap-2">
+							{isSending && <p className="text-xs text-purple-200/80">Отправка...</p>}
+							<button
+								type="button"
+								onClick={() => void handleToggleParticipants()}
+								disabled={activeChatId == null || isParticipantsLoading}
+								className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:opacity-60 ${
+									isParticipantsOpen
+										? 'border-purple-400/50 bg-purple-500/20 text-purple-50 hover:bg-purple-500/30'
+										: 'border-white/10 bg-white/5 text-purple-50 hover:border-white/30 hover:bg-white/10'
+								}`}
+								aria-label="Открыть участников чата"
+							>
+								<Users className="h-4 w-4" />
+								{isParticipantsLoading ? '...' : `Участники${participantsChatId === activeChatId ? ` (${participants.length})` : ''}`}
+							</button>
+							<button
+								type="button"
+								onClick={() => void handleLeaveChat()}
+								disabled={activeChatId == null || isLeavingChat}
+								className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-60"
+								aria-label="Выйти из чата"
+							>
+								<LogOut className="h-4 w-4" />
+								{isLeavingChat ? '...' : 'Выйти'}
+							</button>
+						</div>
 					</div>
+
+					{isParticipantsOpen && activeChatId != null && (
+						<div className="mb-4 rounded-xl border border-white/10 bg-black/30 p-3">
+							<div className="mb-2 flex items-center justify-between">
+								<p className="text-xs uppercase tracking-wide text-purple-200/70">Участники</p>
+								<button
+									type="button"
+									onClick={() => setIsParticipantsOpen(false)}
+									className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-purple-50 transition hover:border-white/30 hover:bg-white/10"
+								>
+									Закрыть
+								</button>
+							</div>
+
+							{participantsError && (
+								<p className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-100">
+									{participantsError}
+								</p>
+							)}
+
+							{!participantsError && participantsChatId === activeChatId && participants.length === 0 && !isParticipantsLoading && (
+								<p className="text-sm text-purple-100/60">В чате нет участников.</p>
+							)}
+
+							{participantsChatId === activeChatId && participants.length > 0 && (
+								<div className="max-h-40 space-y-2 overflow-y-auto pr-1">
+									{participants.map((participant) => {
+										const isMe = currentUserId != null && participant.user_id === currentUserId;
+										const profile = profilesByUserId[participant.user_id];
+										const fullName = profile ? formatFullName(profile) : '';
+										const username = profile ? formatUsername(profile) : '';
+										return (
+											<div
+												key={participant.id}
+												className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+											>
+												<div className="min-w-0">
+													<p className="truncate text-sm font-medium text-purple-50">
+														{isMe ? 'Вы' : (fullName || 'Пользователь')}
+													</p>
+													<p className="truncate text-xs text-purple-100/60">
+														{isMe ? 'Это вы' : (username || 'Загружаю профиль...')}
+													</p>
+												</div>
+												<p className="shrink-0 text-xs text-purple-100/60">с {formatDateTime(participant.joined_at)}</p>
+											</div>
+										);
+									})}
+								</div>
+							)}
+						</div>
+					)}
 
 					<div className="mb-4 max-h-[50vh] space-y-3 overflow-y-auto rounded-xl bg-black/30 p-3 sm:p-4">
 						{isMessagesLoading && activeChatId != null && (
@@ -309,18 +471,38 @@ const ChatForUser: React.FC = () => {
 
 						{messages.map((message) => {
 							const isMine = currentUserId != null && message.user_id === currentUserId;
+							const senderProfile = !isMine ? profilesByUserId[message.user_id] : null;
+							const senderFullName = senderProfile ? formatFullName(senderProfile) : '';
+							const senderUsername = senderProfile ? formatUsername(senderProfile) : '';
+							const senderLabel = isMine ? 'Вы' : (senderFullName || senderUsername || 'Пользователь');
 							return (
 								<div
 									key={message.message_id}
-									className={`rounded-2xl border px-4 py-3 ${
+									className={`group relative rounded-2xl border px-4 py-3 ${
 										isMine
 											? 'ml-auto max-w-[90%] border-purple-500/40 bg-purple-500/20'
 											: 'mr-auto max-w-[95%] border-white/10 bg-white/5'
 									}`}
 								>
+									{isMine && activeChatId != null && (
+										<button
+											type="button"
+											onClick={() => void handleDeleteMessage(message.message_id)}
+											disabled={deletingMessageId != null}
+											className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-100 opacity-0 transition hover:bg-red-500/20 group-hover:opacity-100 disabled:opacity-60"
+											aria-label="Удалить сообщение"
+											title="Удалить"
+										>
+											{deletingMessageId === message.message_id ? (
+												<span className="text-[10px]">...</span>
+											) : (
+												<Trash2 className="h-4 w-4" />
+											)}
+										</button>
+									)}
 									<div className="mb-2 flex items-center gap-2 text-xs text-purple-200/80">
 										<MessageCircle className="h-4 w-4" />
-										<span>{isMine ? 'Вы' : `User #${message.user_id}`}</span>
+										<span>{senderLabel}</span>
 										<span>•</span>
 										<span>{formatDateTime(message.created_at)}</span>
 									</div>
