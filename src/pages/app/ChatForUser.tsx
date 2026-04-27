@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { LogOut, MessageCircle, SendHorizontal, Trash2, Users } from 'lucide-react';
+import { LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
@@ -174,7 +174,11 @@ const ChatForUser: React.FC = () => {
 			return;
 		}
 
-		setIsParticipantsOpen((prev) => !prev);
+		const nextOpen = !isParticipantsOpen;
+		setIsParticipantsOpen(nextOpen);
+		if (!nextOpen) {
+			return;
+		}
 
 		const isFreshForThisChat = participantsChatId === activeChatId && participants.length > 0;
 		if (!isFreshForThisChat) {
@@ -398,58 +402,6 @@ const ChatForUser: React.FC = () => {
 						</div>
 					</div>
 
-					{isParticipantsOpen && activeChatId != null && (
-						<div className="mb-4 rounded-xl border border-white/10 bg-black/30 p-3">
-							<div className="mb-2 flex items-center justify-between">
-								<p className="text-xs uppercase tracking-wide text-purple-200/70">Участники</p>
-								<button
-									type="button"
-									onClick={() => setIsParticipantsOpen(false)}
-									className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-purple-50 transition hover:border-white/30 hover:bg-white/10"
-								>
-									Закрыть
-								</button>
-							</div>
-
-							{participantsError && (
-								<p className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-100">
-									{participantsError}
-								</p>
-							)}
-
-							{!participantsError && participantsChatId === activeChatId && participants.length === 0 && !isParticipantsLoading && (
-								<p className="text-sm text-purple-100/60">В чате нет участников.</p>
-							)}
-
-							{participantsChatId === activeChatId && participants.length > 0 && (
-								<div className="max-h-40 space-y-2 overflow-y-auto pr-1">
-									{participants.map((participant) => {
-										const isMe = currentUserId != null && participant.user_id === currentUserId;
-										const profile = profilesByUserId[participant.user_id];
-										const fullName = profile ? formatFullName(profile) : '';
-										const username = profile ? formatUsername(profile) : '';
-										return (
-											<div
-												key={participant.id}
-												className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
-											>
-												<div className="min-w-0">
-													<p className="truncate text-sm font-medium text-purple-50">
-														{isMe ? 'Вы' : (fullName || 'Пользователь')}
-													</p>
-													<p className="truncate text-xs text-purple-100/60">
-														{isMe ? 'Это вы' : (username || 'Загружаю профиль...')}
-													</p>
-												</div>
-												<p className="shrink-0 text-xs text-purple-100/60">с {formatDateTime(participant.joined_at)}</p>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</div>
-					)}
-
 					<div className="mb-4 max-h-[50vh] space-y-3 overflow-y-auto rounded-xl bg-black/30 p-3 sm:p-4">
 						{isMessagesLoading && activeChatId != null && (
 							<div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/70">
@@ -541,6 +493,86 @@ const ChatForUser: React.FC = () => {
 					</div>
 				</div>
 			</div>
+
+			{isParticipantsOpen && activeChatId != null && (
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+					onClick={() => setIsParticipantsOpen(false)}
+				>
+					<div
+						className="w-full max-w-xl rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-6"
+						onClick={(event) => event.stopPropagation()}
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="chat-participants-title"
+					>
+						<div className="mb-5 flex items-start justify-between gap-4">
+							<div>
+								<h2 id="chat-participants-title" className="text-xl font-bold text-white">
+									Участники чата
+									{participantsChatId === activeChatId ? ` (${participants.length})` : ''}
+								</h2>
+								<p className="mt-1 text-sm text-purple-100/70">
+									{activeChat?.name?.trim() ? activeChat.name : `Чат #${activeChatId}`}
+								</p>
+							</div>
+							<button
+								type="button"
+								onClick={() => setIsParticipantsOpen(false)}
+								className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
+								aria-label="Закрыть окно участников"
+							>
+								<X className="h-4 w-4" />
+							</button>
+						</div>
+
+						{participantsError && (
+							<p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+								{participantsError}
+							</p>
+						)}
+
+						{!participantsError && isParticipantsLoading && (
+							<div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+								Загружаю участников...
+							</div>
+						)}
+
+						{!participantsError && !isParticipantsLoading && participantsChatId === activeChatId && participants.length === 0 && (
+							<p className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+								В чате нет участников.
+							</p>
+						)}
+
+						{!participantsError && participantsChatId === activeChatId && participants.length > 0 && (
+							<div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+								{participants.map((participant) => {
+									const isMe = currentUserId != null && participant.user_id === currentUserId;
+									const profile = profilesByUserId[participant.user_id];
+									const fullName = profile ? formatFullName(profile) : '';
+									const username = profile ? formatUsername(profile) : '';
+									return (
+										<div
+											key={participant.id}
+											className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+									>
+											<div className="min-w-0">
+												<p className="truncate text-sm font-semibold text-white">
+													{isMe ? 'Вы' : (fullName || 'Пользователь')}
+												</p>
+												<p className="truncate text-xs text-purple-100/70">
+													{isMe ? 'Это вы' : (username || 'Загружаю профиль...')}
+												</p>
+											</div>
+											<p className="shrink-0 text-xs text-purple-100/70">с {formatDateTime(participant.joined_at)}</p>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 		</section>
 	);
 };
