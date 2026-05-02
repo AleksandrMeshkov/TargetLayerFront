@@ -4,10 +4,9 @@ import { LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
-import { deleteChatMessage, getChatParticipants, leaveChat, postChatMessage } from '../../api/chat/chatClient';
-import { useChatMessages } from '../../hooks/chatHooks/useChatMessages';
 import { useMyChats } from '../../hooks/chatHooks/useMyChats';
-import type { ChatParticipantResponse, ChatResponse, MessageResponse } from '../../types/chatTypes/chatTypes';
+import { useChatWebSocket } from '../../hooks/chatHooks/useChatWebSocket';
+import type { ChatResponse } from '../../types/chatTypes/chatTypes';
 import type { UserProfile } from '../../types/authTypes/authTypes';
 
 function formatDateTime(dateValue: string): string {
@@ -43,20 +42,24 @@ const ChatForUser: React.FC = () => {
 	const { openChatId } = (location.state as ChatLocationState | null) ?? {};
 
 	const { data: myChatsData, isLoading: isChatsLoading, loadMyChats } = useMyChats();
-	const { data: messagesData, isLoading: isMessagesLoading, loadMessages, setData: setMessagesData } = useChatMessages();
 
 	const [activeChatId, setActiveChatId] = useState<number | null>(null);
 	const [messageDraft, setMessageDraft] = useState('');
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 	const [isSending, setIsSending] = useState(false);
 	const [deletingMessageId, setDeletingMessageId] = useState<number | null>(null);
+	const [pendingDeletedMessageIds, setPendingDeletedMessageIds] = useState<number[]>([]);
 	const [isLeavingChat, setIsLeavingChat] = useState(false);
 	const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
-	const [participants, setParticipants] = useState<ChatParticipantResponse[]>([]);
-	const [participantsChatId, setParticipantsChatId] = useState<number | null>(null);
-	const [isParticipantsLoading, setIsParticipantsLoading] = useState(false);
-	const [participantsError, setParticipantsError] = useState<string | null>(null);
 	const [profilesByUserId, setProfilesByUserId] = useState<Record<number, UserProfile | null>>({});
+
+	const chatSocket = useChatWebSocket(activeChatId);
+	const messages = chatSocket.messages;
+	const participants = chatSocket.participants;
+	const isMessagesLoading = chatSocket.isLoadingHistory;
+	const isParticipantsLoading = isParticipantsOpen && activeChatId != null && !chatSocket.hasParticipants;
+	const participantsChatId = chatSocket.hasParticipants ? activeChatId : null;
+	const participantsError = chatSocket.error;
 
 	useEffect(() => {
 		const loadInitial = async () => {
@@ -68,9 +71,6 @@ const ChatForUser: React.FC = () => {
 				const preferredChatId = openChatId ?? null;
 				const nextChatId = preferredChatId ?? chatsResponse.chats[0]?.chat_id ?? null;
 				setActiveChatId(nextChatId);
-				if (nextChatId != null) {
-					await loadMessages(nextChatId);
-				}
 			} catch (err) {
 				const message = err instanceof Error ? err.message : 'Не удалось загрузить чаты';
 				toast.error(message);
@@ -78,10 +78,9 @@ const ChatForUser: React.FC = () => {
 		};
 
 		void loadInitial();
-	}, [loadMessages, loadMyChats, openChatId]);
+	}, [loadMyChats, openChatId]);
 
 	const chats = myChatsData?.chats ?? [];
-	const messages = messagesData?.messages ?? [];
 
 	const activeChat = useMemo<ChatResponse | null>(() => {
 		if (activeChatId == null) {
@@ -93,15 +92,6 @@ const ChatForUser: React.FC = () => {
 	const selectChat = async (chatId: number) => {
 		setActiveChatId(chatId);
 		setIsParticipantsOpen(false);
-		setParticipants([]);
-		setParticipantsChatId(null);
-		setParticipantsError(null);
-		try {
-			await loadMessages(chatId);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить сообщения';
-			toast.error(message);
-		}
 	};
 
 	const reloadChatsAndSelect = async (chatIdToSelect?: number | null) => {
@@ -109,14 +99,6 @@ const ChatForUser: React.FC = () => {
 		const nextChatId = chatIdToSelect ?? response.chats[0]?.chat_id ?? null;
 		setActiveChatId(nextChatId);
 		setIsParticipantsOpen(false);
-		setParticipants([]);
-		setParticipantsChatId(null);
-		setParticipantsError(null);
-		if (nextChatId != null) {
-			await loadMessages(nextChatId);
-		} else {
-			setMessagesData({ messages: [], total: 0 });
-		}
 	};
 
 	const loadMissingProfilesByUserIds = async (userIds: number[]) => {
@@ -149,25 +131,13 @@ const ChatForUser: React.FC = () => {
 		void loadMissingProfilesByUserIds(senderIds);
 	}, [activeChatId, currentUserId, messages]);
 
-	const loadParticipants = async (chatId: number): Promise<void> => {
-		if (isParticipantsLoading) {
+	useEffect(() => {
+		if (pendingDeletedMessageIds.length === 0) {
 			return;
 		}
 
-		setIsParticipantsLoading(true);
-		setParticipantsError(null);
-		try {
-			const response = await getChatParticipants(chatId);
-			setParticipants(response.participants);
-			setParticipantsChatId(chatId);
-			await loadMissingProfilesByUserIds(response.participants.map((entry) => entry.user_id));
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить участников';
-			setParticipantsError(message);
-		} finally {
-			setIsParticipantsLoading(false);
-		}
-	};
+		setPendingDeletedMessageIds((prev) => prev.filter((id) => messages.some((msg) => msg.message_id === id)));
+	}, [messages, pendingDeletedMessageIds.length]);
 
 	const handleToggleParticipants = async () => {
 		if (activeChatId == null) {
@@ -180,10 +150,7 @@ const ChatForUser: React.FC = () => {
 			return;
 		}
 
-		const isFreshForThisChat = participantsChatId === activeChatId && participants.length > 0;
-		if (!isFreshForThisChat) {
-			await loadParticipants(activeChatId);
-		}
+		await loadMissingProfilesByUserIds(participants.map((entry) => entry.user_id));
 	};
 
 	const handleSendMessage = async () => {
@@ -194,44 +161,11 @@ const ChatForUser: React.FC = () => {
 
 		setIsSending(true);
 		try {
-			const optimisticMessage: MessageResponse = {
-				message_id: Date.now(),
-				chat_id: activeChatId,
-				user_id: currentUserId ?? -1,
-				type: 'text',
-				content: normalizedMessage,
-				created_at: new Date().toISOString(),
-			};
-
-			setMessagesData((prev) => {
-				const previousMessages = prev?.messages ?? [];
-				return {
-					messages: [...previousMessages, optimisticMessage],
-					total: (prev?.total ?? previousMessages.length) + 1,
-				};
-			});
-
 			setMessageDraft('');
-
-			const created = await postChatMessage(activeChatId, { content: normalizedMessage, type: 'text' });
-
-			setMessagesData((prev) => {
-				const previousMessages = prev?.messages ?? [];
-				const withoutOptimistic = previousMessages.filter((msg) => msg.message_id !== optimisticMessage.message_id);
-				return {
-					messages: [...withoutOptimistic, created],
-					total: (prev?.total ?? previousMessages.length),
-				};
-			});
+			chatSocket.sendMessage(normalizedMessage, 'text');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось отправить сообщение';
 			toast.error(message);
-			if (activeChatId != null) {
-				try {
-					await loadMessages(activeChatId);
-				} catch {
-				}
-			}
 		} finally {
 			setIsSending(false);
 		}
@@ -251,25 +185,14 @@ const ChatForUser: React.FC = () => {
 		}
 
 		setDeletingMessageId(messageId);
-		setMessagesData((prev) => {
-			const previousMessages = prev?.messages ?? [];
-			const nextMessages = previousMessages.filter((msg) => msg.message_id !== messageId);
-			return {
-				messages: nextMessages,
-				total: Math.max(0, (prev?.total ?? previousMessages.length) - 1),
-			};
-		});
+		setPendingDeletedMessageIds((prev) => (prev.includes(messageId) ? prev : [...prev, messageId]));
 
 		try {
-			const response = await deleteChatMessage(activeChatId, messageId);
-			toast.success(response.message || 'Сообщение удалено');
+			chatSocket.deleteMessage(messageId);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось удалить сообщение';
 			toast.error(message);
-			try {
-				await loadMessages(activeChatId);
-			} catch {
-			}
+			setPendingDeletedMessageIds((prev) => prev.filter((id) => id !== messageId));
 		} finally {
 			setDeletingMessageId(null);
 		}
@@ -286,8 +209,8 @@ const ChatForUser: React.FC = () => {
 
 		setIsLeavingChat(true);
 		try {
-			const response = await leaveChat(activeChatId);
-			toast.success(response.message || 'Вы вышли из чата');
+			chatSocket.leave();
+			toast.success('Вы вышли из чата');
 			setMessageDraft('');
 			await reloadChatsAndSelect(null);
 		} catch (err) {
@@ -378,7 +301,7 @@ const ChatForUser: React.FC = () => {
 							<button
 								type="button"
 								onClick={() => void handleToggleParticipants()}
-								disabled={activeChatId == null || isParticipantsLoading}
+								disabled={activeChatId == null}
 								className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:opacity-60 ${
 									isParticipantsOpen
 										? 'border-purple-400/50 bg-purple-500/20 text-purple-50 hover:bg-purple-500/30'
@@ -421,7 +344,7 @@ const ChatForUser: React.FC = () => {
 							</div>
 						)}
 
-						{messages.map((message) => {
+						{messages.filter((message) => !pendingDeletedMessageIds.includes(message.message_id)).map((message) => {
 							const isMine = currentUserId != null && message.user_id === currentUserId;
 							const senderProfile = !isMine ? profilesByUserId[message.user_id] : null;
 							const senderFullName = senderProfile ? formatFullName(senderProfile) : '';
@@ -553,7 +476,7 @@ const ChatForUser: React.FC = () => {
 									const username = profile ? formatUsername(profile) : '';
 									return (
 										<div
-											key={participant.id}
+											key={participant.user_id}
 											className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3"
 									>
 											<div className="min-w-0">

@@ -24,5 +24,12 @@ export function isAuthenticatedSession(): boolean {
 }
 
 export function getStoredAccessToken(): string | null {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  const raw = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const normalized = raw?.trim();
+
+  if (!normalized || normalized === 'null' || normalized === 'undefined') {
+    return null;
+  }
+
+  return normalized;
 }

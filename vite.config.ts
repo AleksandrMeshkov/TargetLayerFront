@@ -8,12 +8,13 @@ export default defineConfig({
       '/api': {
         target: 'https://targetl.site',
         changeOrigin: true,
-        secure: true,
+        secure: false,
+        ws: true,
       },
       '/uploads': {
         target: 'https://targetl.site',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },

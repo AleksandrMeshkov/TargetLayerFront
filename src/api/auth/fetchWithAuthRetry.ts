@@ -20,7 +20,7 @@ async function getRefreshedAccessToken(): Promise<string> {
   return refreshAccessTokenPromise;
 }
 
-export async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<Response> {
+export async function ensureAccessToken(): Promise<string> {
   let token = getStoredAccessToken();
 
   if (!token) {
@@ -31,6 +31,17 @@ export async function fetchWithAuthRetry(endpoint: string, init: RequestInit): P
       throw new Error('Сессия истекла. Выполните вход снова.');
     }
   }
+
+  if (!token || token === 'null' || token === 'undefined') {
+    clearAuthSession();
+    throw new Error('Сессия истекла. Выполните вход снова.');
+  }
+
+  return token;
+}
+
+export async function fetchWithAuthRetry(endpoint: string, init: RequestInit): Promise<Response> {
+  let token = await ensureAccessToken();
 
   const makeRequest = async (accessToken: string): Promise<Response> => {
     const headers = {
