@@ -15,6 +15,7 @@ const Profile: React.FC = () => {
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState({ name: '', surname: '', patronymic: '' });
   const [error, setError] = useState<string | null>(null);
+  const [showPlaceholder, setShowPlaceholder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getAvatarUrl = (avatarPath: string | null | undefined): string | null => {
@@ -24,7 +25,10 @@ const Profile: React.FC = () => {
       return avatarPath;
     }
     
-    return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+    const normalizedPath = avatarPath.startsWith('/') ? avatarPath : `/${avatarPath}`;
+    const url = `${API_BASE_URL}${normalizedPath}`;
+    console.log('Сконструирован URL аватара:', { avatarPath, normalizedPath, API_BASE_URL, resultUrl: url });
+    return url;
   };
 
   useEffect(() => {
@@ -125,6 +129,7 @@ const Profile: React.FC = () => {
 
     try {
       setUploading(true);
+      setShowPlaceholder(false);
       console.log('Начинаем загрузку файла...');
       const updatedProfile = await updateUserProfile(file);
       console.log('Загрузка завершена, новый профиль:', updatedProfile);
@@ -188,20 +193,24 @@ const Profile: React.FC = () => {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           {(() => {
             const avatarUrl = getAvatarUrl(profile.avatar_url);
-            return avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Фото профиля"
-                onError={(e) => {
-                  console.error('Ошибка загрузки изображения:', e);
-                  e.currentTarget.style.display = 'none';
-                }}
-                className="h-36 w-36 shrink-0 rounded-full border border-purple-400/30 object-cover shadow-lg shadow-purple-500/30"
-              />
-            ) : (
+            return (showPlaceholder || !avatarUrl) ? (
               <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-6xl font-semibold text-white shadow-lg shadow-purple-500/30">
                 {getInitials()}
               </div>
+            ) : (
+              <img
+                src={avatarUrl}
+                alt="Фото профиля"
+                onLoad={() => setShowPlaceholder(false)}
+                onError={(e) => {
+                  console.error('Ошибка загрузки изображения:', {
+                    url: (e.target as HTMLImageElement).src,
+                    error: e,
+                  });
+                  setShowPlaceholder(true);
+                }}
+                className="h-36 w-36 shrink-0 rounded-full border border-purple-400/30 object-cover shadow-lg shadow-purple-500/30"
+              />
             );
           })()}
 

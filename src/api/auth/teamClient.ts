@@ -73,3 +73,18 @@ export async function deleteTeam(teamId: number): Promise<ApiStatusResponse> {
 
   return (await response.json()) as ApiStatusResponse;
 }
+
+export async function leaveTeam(teamId: number): Promise<ApiStatusResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}/leave`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось выйти из команды'));
+  }
+
+  return (await response.json()) as ApiStatusResponse;
+}

@@ -24,5 +24,16 @@ export function useMyChats() {
     }
   }, []);
 
-  return { data, isLoading, error, loadMyChats };
+  const removeChatLocally = useCallback((chatId: number) => {
+    setData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        chats: prev.chats.filter((chat) => chat.chat_id !== chatId),
+        total: prev.total - 1,
+      };
+    });
+  }, []);
+
+  return { data, isLoading, error, loadMyChats, removeChatLocally };
 }

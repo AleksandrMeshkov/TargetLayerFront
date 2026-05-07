@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, Search as SearchIcon, UserPlus, Users, X } from 'lucide-react';
+import { Loader2, MessageCircle, Search as SearchIcon, UserPlus, Users, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../../api/apiBase/apiBase';
 import {
@@ -7,6 +8,7 @@ import {
 	searchUsers,
 } from '../../api/auth/userClient';
 import { getMyTeams, getTeamMembers, inviteUserByEmail } from '../../api/auth/teamClient';
+import { createChat } from '../../api/chat/chatClient';
 import type { SearchUser, TeamItem } from '../../types/authTypes/authTypes';
 
 const ADMIN_TEAM_ROLE_ID = 1;
@@ -28,6 +30,7 @@ const getInitials = (user: SearchUser): string => {
 };
 
 const Search: React.FC = () => {
+	const navigate = useNavigate();
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState<SearchUser[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -40,6 +43,8 @@ const Search: React.FC = () => {
 	const [teamsLoaded, setTeamsLoaded] = useState(false);
 	const [teamsError, setTeamsError] = useState<string | null>(null);
 	const [invitingTeamId, setInvitingTeamId] = useState<number | null>(null);
+	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
+	const [creatingChatUserId, setCreatingChatUserId] = useState<number | null>(null);
 
 	const trimmedQuery = useMemo(() => query.trim(), [query]);
 
@@ -160,6 +165,23 @@ const Search: React.FC = () => {
 		}
 	};
 
+	const handleCreateChat = async (user: SearchUser) => {
+		try {
+			setCreatingChatUserId(user.user_id);
+			const chat = await createChat({
+				team_id: 0,
+				participant_user_ids: [user.user_id],
+			});
+			toast.success(`Чат с @${user.username} создан`);
+			navigate(`/app/chats`, { state: { openChatId: chat.chat_id } });
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось создать чат';
+			toast.error(message);
+		} finally {
+			setCreatingChatUserId(null);
+		}
+	};
+
 	return (
 		<>
 			<section className="space-y-6">
@@ -223,34 +245,54 @@ const Search: React.FC = () => {
 							>
 								<div className="flex items-center justify-between gap-4">
 									<div className="flex min-w-0 items-center gap-4">
-									{avatarUrl ? (
-										<img
-											src={avatarUrl}
-											alt={`Аватар ${user.username}`}
-											className="h-14 w-14 rounded-full border border-purple-400/30 object-cover"
-										/>
-									) : (
-										<div className="flex h-14 w-14 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-sm font-semibold text-white">
-											{getInitials(user)}
-										</div>
-									)}
+										{avatarUrl && !failedAvatarUserIds.has(user.user_id) ? (
+											<img
+												src={avatarUrl}
+												alt={`Аватар ${user.username}`}
+												onError={() => {
+													console.error('Ошибка загрузки аватара пользователя:', user.user_id);
+													setFailedAvatarUserIds(prev => new Set([...prev, user.user_id]));
+												}}
+												className="h-14 w-14 rounded-full border border-purple-400/30 object-cover"
+											/>
+										) : (
+											<div className="flex h-14 w-14 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-sm font-semibold text-white">
+												{getInitials(user)}
+											</div>
+										)}
 
 										<div className="min-w-0">
 											<p className="truncate text-sm font-semibold text-white">{fullName}</p>
-										<p className="truncate text-sm text-purple-200/80">@{user.username}</p>
+											<p className="truncate text-sm text-purple-200/80">@{user.username}</p>
 										</div>
 									</div>
+
+									<div className="flex shrink-0 items-center gap-2">
+									<button
+										type="button"
+										onClick={() => void handleCreateChat(user)}
+										disabled={creatingChatUserId === user.user_id}
+										className="inline-flex items-center gap-2 rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-2 text-xs font-semibold text-purple-100 transition-colors hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										{creatingChatUserId === user.user_id ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<MessageCircle className="h-4 w-4" />
+										)}
+										Написать
+									</button>
 
 									<button
 										type="button"
 										onClick={() => void openInviteModal(user)}
-										className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-2 text-xs font-semibold text-purple-100 transition-colors hover:bg-purple-500/20"
+										className="inline-flex items-center gap-2 rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-2 text-xs font-semibold text-purple-100 transition-colors hover:bg-purple-500/20"
 									>
 										<UserPlus className="h-4 w-4" />
 										Пригласить
 									</button>
 								</div>
-							</article>
+							</div>
+						</article>
 						);
 					})}
 				</div>

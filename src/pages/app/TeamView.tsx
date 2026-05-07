@@ -10,6 +10,7 @@ import {
 import {
 	deleteTeam,
 	getTeamMembers,
+	leaveTeam,
 	renameTeam,
 } from '../../api/auth/teamClient';
 import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
@@ -99,6 +100,7 @@ const TeamView: React.FC = () => {
 	const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
 	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
 	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
+	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
 
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
@@ -396,6 +398,33 @@ const TeamView: React.FC = () => {
 			navigate('/app/teams', { replace: true });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось удалить команду';
+			toast.error(message);
+		} finally {
+			setDeleting(false);
+		}
+	};
+
+	const handleLeaveTeam = async () => {
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			toast.error('Некорректный идентификатор команды');
+			return;
+		}
+
+		const confirmed = window.confirm('Выйти из команды? Это действие нельзя отменить.');
+		if (!confirmed) {
+			return;
+		}
+
+		try {
+			setDeleting(true);
+			await leaveTeam(numericTeamId);
+			
+			// Чат команды будет автоматически удален из списка при следующей загрузке
+			// или пользователь должен перезагрузить список чатов
+			toast.success('Вы вышли из команды');
+			navigate('/app/teams', { replace: true });
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось выйти из команды';
 			toast.error(message);
 		} finally {
 			setDeleting(false);
@@ -726,12 +755,6 @@ const TeamView: React.FC = () => {
 							</div>
 						)}
 
-						{!isAdmin && loadedOnce && (
-							<p className="mb-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
-								У вас роль участника. Управление командой доступно администратору.
-							</p>
-						)}
-
 						{loading && (
 							<p className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
 								Загрузка участников...
@@ -754,16 +777,21 @@ const TeamView: React.FC = () => {
 							<div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
 								{members.map(({ membership, profile }) => {
 									const avatarUrl = buildAvatarUrl(profile.avatar_url);
+									const hasFailedAvatar = failedAvatarUserIds.has(membership.user_id);
 									return (
 										<article
 											key={membership.id}
 											className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-4"
 										>
 											<div className="flex items-center gap-3">
-												{avatarUrl ? (
+												{(avatarUrl && !hasFailedAvatar) ? (
 													<img
 														src={avatarUrl}
 														alt={`Аватар ${profile.username ?? `user-${membership.user_id}`}`}
+														onError={() => {
+															console.error('Ошибка загрузки аватара пользователя:', membership.user_id);
+															setFailedAvatarUserIds(prev => new Set([...prev, membership.user_id]));
+														}}
 														className="h-11 w-11 rounded-full border border-purple-400/30 object-cover"
 													/>
 												) : (
@@ -785,6 +813,17 @@ const TeamView: React.FC = () => {
 									);
 								})}
 							</div>
+						)}
+
+						{!isAdmin && loadedOnce && (
+							<button
+								type="button"
+								onClick={handleLeaveTeam}
+								disabled={deleting}
+								className="mt-6 w-full rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+							>
+								{deleting ? 'Выход...' : 'Выйти из команды'}
+							</button>
 						)}
 					</div>
 				</div>

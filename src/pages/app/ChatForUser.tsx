@@ -41,7 +41,7 @@ const ChatForUser: React.FC = () => {
 	const location = useLocation();
 	const { openChatId } = (location.state as ChatLocationState | null) ?? {};
 
-	const { data: myChatsData, isLoading: isChatsLoading, loadMyChats } = useMyChats();
+	const { data: myChatsData, isLoading: isChatsLoading, loadMyChats, removeChatLocally } = useMyChats();
 
 	const [activeChatId, setActiveChatId] = useState<number | null>(null);
 	const [messageDraft, setMessageDraft] = useState('');
@@ -210,9 +210,15 @@ const ChatForUser: React.FC = () => {
 		setIsLeavingChat(true);
 		try {
 			chatSocket.leave();
+			removeChatLocally(activeChatId);
 			toast.success('Вы вышли из чата');
 			setMessageDraft('');
-			await reloadChatsAndSelect(null);
+			
+			// Переключаемся на первый оставшийся чат (если есть) или на null
+			const remainingChats = chats.filter(chat => chat.chat_id !== activeChatId);
+			const nextChatId = remainingChats[0]?.chat_id ?? null;
+			setActiveChatId(nextChatId);
+			setIsParticipantsOpen(false);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось выйти из чата';
 			toast.error(message);
