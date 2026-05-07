@@ -21,3 +21,7 @@ export async function getOrCreateTeamChat(teamId: number): Promise<ChatResponse>
 export async function getChatParticipants(chatId: number): Promise<ChatParticipantsListResponse> {
   return requestWithAuth<ChatParticipantsListResponse>(`/api/v1/chats/${chatId}/participants`);
 }
+
+export async function leaveChat(chatId: number): Promise<{ status: string; message: string }> {
+  return requestWithAuth<{ status: string; message: string }>(`/api/v1/chats/${chatId}/leave`, 'DELETE');
+}

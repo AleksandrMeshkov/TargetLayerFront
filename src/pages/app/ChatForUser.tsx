@@ -4,6 +4,7 @@ import { LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
+import { leaveChat } from '../../api/chat/chatClient';
 import { useMyChats } from '../../hooks/chatHooks/useMyChats';
 import { useChatWebSocket } from '../../hooks/chatHooks/useChatWebSocket';
 import type { ChatResponse } from '../../types/chatTypes/chatTypes';
@@ -209,7 +210,7 @@ const ChatForUser: React.FC = () => {
 
 		setIsLeavingChat(true);
 		try {
-			chatSocket.leave();
+			await leaveChat(activeChatId);
 			removeChatLocally(activeChatId);
 			toast.success('Вы вышли из чата');
 			setMessageDraft('');
