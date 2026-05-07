@@ -1,7 +1,7 @@
 import { fetchWithAuthRetry } from './fetchWithAuthRetry';
 import { parseApiError } from '../../utils/api/parseApiError';
 import { requestWithAuth } from './requestWithAuth';
-import type { ApiStatusResponse, CreateTeamPayload, MyTeamsResponse, RenameTeamPayload, TeamInviteEmailResponse, TeamItem, TeamMembersResponse } from '../../types/authTypes/authTypes';
+import type { ApiStatusResponse, CreateTeamPayload, MyTeamsResponse, RenameTeamPayload, TeamInviteEmailResponse, TeamItem, TeamMembersResponse, TeamMemberItem } from '../../types/authTypes/authTypes';
 
 export async function getMyTeams(): Promise<MyTeamsResponse> {
   return requestWithAuth<MyTeamsResponse>('/api/v1/teams/my-teams');
@@ -87,4 +87,20 @@ export async function leaveTeam(teamId: number): Promise<ApiStatusResponse> {
   }
 
   return (await response.json()) as ApiStatusResponse;
+}
+
+export async function updateMemberRole(teamId: number, userId: number, roleId: number): Promise<TeamMemberItem> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}/users/${userId}/role`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role_id: roleId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось обновить роль участника'));
+  }
+
+  return (await response.json()) as TeamMemberItem;
 }

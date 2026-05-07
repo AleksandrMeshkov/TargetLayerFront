@@ -12,6 +12,7 @@ import {
 	getTeamMembers,
 	leaveTeam,
 	renameTeam,
+	updateMemberRole,
 } from '../../api/auth/teamClient';
 import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
 import { createChat, getMyChats, getOrCreateTeamChat } from '../../api/chat/chatClient';
@@ -101,6 +102,7 @@ const TeamView: React.FC = () => {
 	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
 	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
 	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
+	const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
 
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
@@ -291,6 +293,31 @@ const TeamView: React.FC = () => {
 
 	const handleCloseTeamPanel = () => {
 		setIsModalOpen(false);
+	};
+
+	const handleUpdateMemberRole = async (userId: number, newRoleId: number) => {
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			return;
+		}
+
+		setUpdatingRoleUserId(userId);
+		try {
+			const updatedMember = await updateMemberRole(numericTeamId, userId, newRoleId);
+			setMembers((prev) =>
+				prev.map((entry) =>
+					entry.membership.user_id === userId
+						? { ...entry, membership: { ...entry.membership, team_role_id: updatedMember.team_role_id } }
+						: entry
+				)
+			);
+			const roleText = newRoleId === 1 ? 'Администратор' : 'Участник';
+			toast.success(`Пользователь теперь ${roleText}`);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось обновить роль';
+			toast.error(message);
+		} finally {
+			setUpdatingRoleUserId(null);
+		}
 	};
 
 	const handleOpenShareModal = async () => {
@@ -806,9 +833,38 @@ const TeamView: React.FC = () => {
 												</div>
 											</div>
 
-											<span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
-												{formatRole(membership.team_role_id)}
-											</span>
+											{isAdmin && membership.user_id !== myUserId ? (
+												<div className="flex items-center gap-2">
+													{membership.team_role_id === 2 && (
+														<button
+															type="button"
+															onClick={() => void handleUpdateMemberRole(membership.user_id, 1)}
+															disabled={updatingRoleUserId === membership.user_id}
+															className="inline-flex items-center gap-1 rounded-lg border border-purple-400/40 bg-purple-500/20 px-3 py-1 text-xs font-medium text-purple-100 transition hover:bg-purple-500/30 disabled:opacity-60"
+															title="Назначить администратором"
+														>
+															<Shield className="h-3 w-3" />
+															{updatingRoleUserId === membership.user_id ? '...' : 'Администратор'}
+														</button>
+													)}
+													{membership.team_role_id === 1 && (
+														<button
+															type="button"
+															onClick={() => void handleUpdateMemberRole(membership.user_id, 2)}
+															disabled={updatingRoleUserId === membership.user_id}
+															className="inline-flex items-center gap-1 rounded-lg border border-yellow-500/40 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-100 transition hover:bg-yellow-500/30 disabled:opacity-60"
+															title="Понизить до участника"
+														>
+															<Users className="h-3 w-3" />
+															{updatingRoleUserId === membership.user_id ? '...' : 'Участник'}
+														</button>
+													)}
+												</div>
+											) : (
+												<span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
+													{formatRole(membership.team_role_id)}
+												</span>
+											)}
 										</article>
 									);
 								})}

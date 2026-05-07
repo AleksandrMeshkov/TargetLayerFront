@@ -215,7 +215,6 @@ const ChatForUser: React.FC = () => {
 			toast.success('Вы вышли из чата');
 			setMessageDraft('');
 			
-			// Переключаемся на первый оставшийся чат (если есть) или на null
 			const remainingChats = chats.filter(chat => chat.chat_id !== activeChatId);
 			const nextChatId = remainingChats[0]?.chat_id ?? null;
 			setActiveChatId(nextChatId);
