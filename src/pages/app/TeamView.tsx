@@ -22,6 +22,7 @@ import {
 	getRoadmapTasks,
 	setRoadmapTaskComplete,
 	shareRoadmapToTeam,
+	copyRoadmap,
 } from '../../api/roadmaps/roadmapApi';
 import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
 
@@ -103,6 +104,7 @@ const TeamView: React.FC = () => {
 	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
 	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
 	const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
+	const [isCopyingRoadmap, setIsCopyingRoadmap] = useState(false);
 
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
@@ -519,6 +521,19 @@ const TeamView: React.FC = () => {
 		}
 	};
 
+	const handleCopyRoadmap = async (roadmapId: number): Promise<void> => {
+		try {
+			setIsCopyingRoadmap(true);
+			const copied = await copyRoadmap(roadmapId);
+			toast.success(`Роудмап успешно скопирован в ваш аккаунт #${copied.roadmap_id}`);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось скопировать роудмап';
+			toast.error(message);
+		} finally {
+			setIsCopyingRoadmap(false);
+		}
+	};
+
 	return (
 		<section className="flex h-[calc(100dvh-96px)] min-h-[540px] flex-col">
 			<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5">
@@ -606,35 +621,52 @@ const TeamView: React.FC = () => {
 										{teamRoadmaps.map((roadmap) => {
 											const isSelected = roadmap.roadmap_id === selectedTeamRoadmapId;
 											return (
-												<button
+												<div
 													key={roadmap.roadmap_id}
-													type="button"
-													onClick={() => void handleSelectTeamRoadmap(roadmap.roadmap_id)}
-													className={`w-full rounded-xl border bg-black/20 p-4 text-left transition-colors hover:border-purple-500/30 ${
-														isSelected ? 'border-purple-400/60' : 'border-white/10'
+													className={`w-full rounded-xl border bg-black/20 p-4 text-left transition-colors ${
+														isSelected ? 'border-purple-400/60' : 'border-white/10 hover:border-purple-500/30'
 													}`}
 												>
-											<div className="flex items-start justify-between gap-3">
-												<div>
-													<p className="text-xs uppercase tracking-wide text-purple-200/70">Роудмап #{roadmap.roadmap_id}</p>
-													<h3 className="mt-2 text-sm font-semibold text-white">
-														{roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
-													</h3>
+													<button
+														type="button"
+														onClick={() => void handleSelectTeamRoadmap(roadmap.roadmap_id)}
+														className="block w-full text-left"
+													>
+														<div className="flex items-start justify-between gap-3">
+															<div>
+																<p className="text-xs uppercase tracking-wide text-purple-200/70">Роудмап #{roadmap.roadmap_id}</p>
+																<h3 className="mt-2 text-sm font-semibold text-white">
+																	{roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
+																</h3>
+															</div>
+															<span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-purple-100/80">
+																{roadmap.tasks.length} задач
+															</span>
+														</div>
+
+														{roadmap.goal?.description && (
+															<p className="mt-2 line-clamp-3 text-xs text-purple-100/70">{roadmap.goal.description}</p>
+														)}
+
+														<div className="mt-3 flex items-center justify-between text-xs text-purple-100/60">
+															<span>{roadmap.completed ? 'Завершен' : 'В процессе'}</span>
+															<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
+														</div>
+													</button>
+													
+													<button
+														type="button"
+														onClick={(e) => {
+															e.stopPropagation();
+															void handleCopyRoadmap(roadmap.roadmap_id);
+														}}
+														disabled={isCopyingRoadmap}
+														className="mt-3 w-full rounded-lg border border-purple-400/40 bg-purple-500/20 py-1.5 text-xs font-semibold text-purple-100 transition hover:bg-purple-500/30 disabled:opacity-60"
+														title="Скопировать этот роудмап себе"
+													>
+														{isCopyingRoadmap ? 'Копирую...' : '📋 Скопировать'}
+													</button>
 												</div>
-												<span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-purple-100/80">
-													{roadmap.tasks.length} задач
-												</span>
-											</div>
-
-											{roadmap.goal?.description && (
-												<p className="mt-2 line-clamp-3 text-xs text-purple-100/70">{roadmap.goal.description}</p>
-											)}
-
-											<div className="mt-3 flex items-center justify-between text-xs text-purple-100/60">
-												<span>{roadmap.completed ? 'Завершен' : 'В процессе'}</span>
-												<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
-											</div>
-											</button>
 										);
 										})}
 									</div>
@@ -654,6 +686,16 @@ const TeamView: React.FC = () => {
 													)}
 												</div>
 
+										<div className="flex gap-2">
+											<button
+												type="button"
+												onClick={() => void handleCopyRoadmap(selectedTeamRoadmap.roadmap_id)}
+												disabled={isCopyingRoadmap}
+												className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
+												title="Скопировать роудмап себе"
+											>
+												{isCopyingRoadmap ? 'Копирую...' : 'Скопировать'}
+											</button>
 											<button
 												type="button"
 												onClick={() => setSelectedTeamRoadmapId(null)}
@@ -663,18 +705,6 @@ const TeamView: React.FC = () => {
 												<X className="h-4 w-4" />
 											</button>
 										</div>
-
-										<div className="mt-4">
-											<div className="mb-3 flex items-center justify-between gap-3">
-												<p className="text-sm font-medium text-purple-100/80">Задачи роудмапа</p>
-												{isLoadingTeamRoadmapTasks && (
-													<span className="inline-flex items-center gap-2 text-xs text-purple-200/70">
-														<LoaderCircle className="h-4 w-4 animate-spin" />
-														Загружаю задачи...
-													</span>
-												)}
-											</div>
-
 											{!isLoadingTeamRoadmapTasks && visibleTeamRoadmapTasks.length === 0 && (
 												<div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 text-sm text-purple-100/60">
 													В этом роудмапе пока нет задач.

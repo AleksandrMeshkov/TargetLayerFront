@@ -1,6 +1,6 @@
 import { fetchWithAuthRetry } from '../auth/fetchWithAuthRetry';
 import { parseApiError } from '../../utils/api/parseApiError';
-import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
+import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapItem, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
 } from '../../types/roadmapsTypes/roadmapsTypes';
 
 export async function getMyRoadmaps(): Promise<RoadmapsListResponse> {
@@ -65,6 +65,21 @@ export async function shareRoadmapToTeam(
   }
 
   return (await response.json()) as ShareRoadmapResponse;
+}
+
+export async function copyRoadmap(roadmapId: number): Promise<RoadmapItem> {
+  const response = await fetchWithAuthRetry(`/api/v1/roadmaps/${roadmapId}/copy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось скопировать роудмап'));
+  }
+
+  return (await response.json()) as RoadmapItem;
 }
 
 export async function createRoadmapTask(
