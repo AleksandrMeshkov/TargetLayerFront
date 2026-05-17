@@ -20,6 +20,7 @@ import {
 	getMyRoadmaps,
 	getRoadmapsByTeam,
 	getRoadmapTasks,
+	deleteTeamRoadmap,
 	setRoadmapTaskComplete,
 	shareRoadmapToTeam,
 	copyRoadmap,
@@ -101,6 +102,7 @@ const TeamView: React.FC = () => {
 	const [isLoadingMyRoadmaps, setIsLoadingMyRoadmaps] = useState(false);
 	const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
 	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
+	const [isDeletingTeamRoadmap, setIsDeletingTeamRoadmap] = useState(false);
 	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
 	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
 	const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
@@ -534,6 +536,48 @@ const TeamView: React.FC = () => {
 		}
 	};
 
+	const handleDeleteTeamRoadmap = async (roadmapId: number): Promise<void> => {
+		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
+			return;
+		}
+
+		const roadmapToDelete = teamRoadmaps.find((item) => item.roadmap_id === roadmapId) ?? null;
+		if (!roadmapToDelete) {
+			return;
+		}
+
+		const confirmed = window.confirm('Удалить роудмап из команды? Это действие нельзя отменить.');
+		if (!confirmed) {
+			return;
+		}
+
+		setIsDeletingTeamRoadmap(true);
+		try {
+			await deleteTeamRoadmap(numericTeamId, roadmapToDelete.roadmap_id);
+
+			const nextRoadmaps = teamRoadmaps.filter((item) => item.roadmap_id !== roadmapToDelete.roadmap_id);
+			setTeamRoadmaps(nextRoadmaps);
+			setTeamTasksCache((prev) => {
+				const { [roadmapToDelete.roadmap_id]: _removed, ...rest } = prev;
+				return rest;
+			});
+
+			if (selectedTeamRoadmapId === roadmapToDelete.roadmap_id) {
+				setSelectedTeamRoadmapId(nextRoadmaps[0]?.roadmap_id ?? null);
+				if (nextRoadmaps[0]) {
+					await handleSelectTeamRoadmap(nextRoadmaps[0].roadmap_id);
+				}
+			}
+
+			toast.success('Роудмап удален из команды');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось удалить командный роудмап';
+			toast.error(message);
+		} finally {
+			setIsDeletingTeamRoadmap(false);
+		}
+	};
+
 	return (
 		<section className="flex h-[calc(100dvh-96px)] min-h-[540px] flex-col">
 			<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5">
@@ -666,6 +710,20 @@ const TeamView: React.FC = () => {
 													>
 														{isCopyingRoadmap ? 'Копирую...' : '📋 Скопировать'}
 													</button>
+													{isAdmin && (
+														<button
+															type="button"
+															onClick={(event) => {
+																event.stopPropagation();
+																void handleDeleteTeamRoadmap(roadmap.roadmap_id);
+															}}
+															disabled={isDeletingTeamRoadmap || isCopyingRoadmap}
+															className="mt-2 w-full rounded-lg border border-red-500/30 bg-red-500/10 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-60"
+															title="Удалить роудмап из команды"
+														>
+															{isDeletingTeamRoadmap ? 'Удаление...' : 'Удалить'}
+														</button>
+													)}
 												</div>
 										);
 										})}
@@ -690,12 +748,23 @@ const TeamView: React.FC = () => {
 											<button
 												type="button"
 												onClick={() => void handleCopyRoadmap(selectedTeamRoadmap.roadmap_id)}
-												disabled={isCopyingRoadmap}
+												disabled={isCopyingRoadmap || isDeletingTeamRoadmap}
 												className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
 												title="Скопировать роудмап себе"
 											>
 												{isCopyingRoadmap ? 'Копирую...' : 'Скопировать'}
 											</button>
+											{isAdmin && (
+												<button
+													type="button"
+													onClick={() => void handleDeleteTeamRoadmap(selectedTeamRoadmap.roadmap_id)}
+													disabled={isDeletingTeamRoadmap || isCopyingRoadmap}
+													className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-100 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+													title="Удалить роудмап из команды"
+												>
+													{isDeletingTeamRoadmap ? 'Удаление...' : 'Удалить'}
+												</button>
+											)}
 											<button
 												type="button"
 												onClick={() => setSelectedTeamRoadmapId(null)}

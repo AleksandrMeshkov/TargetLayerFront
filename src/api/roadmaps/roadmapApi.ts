@@ -187,3 +187,16 @@ export async function deleteRoadmap(roadmapId: number): Promise<void> {
     throw new Error(await parseApiError(response, 'Не удалось удалить роудмап'));
   }
 }
+
+export async function deleteTeamRoadmap(teamId: number, roadmapId: number): Promise<void> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}/roadmaps/${roadmapId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось удалить командный роудмап'));
+  }
+}
