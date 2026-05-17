@@ -4,6 +4,7 @@ import type {
   ChatListResponse,
   ChatParticipantsListResponse,
   ChatResponse,
+  ChatUpdatePayload,
 } from '../../types/chatTypes/chatTypes';
 
 export async function createChat(payload: ChatCreatePayload): Promise<ChatResponse> {
@@ -20,6 +21,10 @@ export async function getOrCreateTeamChat(teamId: number): Promise<ChatResponse>
 
 export async function getChatParticipants(chatId: number): Promise<ChatParticipantsListResponse> {
   return requestWithAuth<ChatParticipantsListResponse>(`/api/v1/chats/${chatId}/participants`);
+}
+
+export async function renameChat(chatId: number, payload: ChatUpdatePayload): Promise<ChatResponse> {
+  return requestWithAuth<ChatResponse>(`/api/v1/chats/${chatId}`, 'PUT', payload);
 }
 
 export async function leaveChat(chatId: number): Promise<{ status: string; message: string }> {

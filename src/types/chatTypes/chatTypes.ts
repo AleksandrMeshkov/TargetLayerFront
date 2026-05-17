@@ -4,6 +4,10 @@ export type ChatCreatePayload = {
   name?: string | null;
 };
 
+export type ChatUpdatePayload = {
+  name: string;
+};
+
 export type ChatResponse = {
   chat_id: number;
   team_id: number;

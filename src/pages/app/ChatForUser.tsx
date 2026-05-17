@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-react';
+import { Edit2, LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
-import { leaveChat } from '../../api/chat/chatClient';
+import { leaveChat, renameChat } from '../../api/chat/chatClient';
 import { useMyChats } from '../../hooks/chatHooks/useMyChats';
 import { useChatWebSocket } from '../../hooks/chatHooks/useChatWebSocket';
 import type { ChatResponse } from '../../types/chatTypes/chatTypes';
@@ -51,6 +51,9 @@ const ChatForUser: React.FC = () => {
 	const [deletingMessageId, setDeletingMessageId] = useState<number | null>(null);
 	const [pendingDeletedMessageIds, setPendingDeletedMessageIds] = useState<number[]>([]);
 	const [isLeavingChat, setIsLeavingChat] = useState(false);
+	const [chatNameDraft, setChatNameDraft] = useState('');
+	const [isChatNameEditorOpen, setIsChatNameEditorOpen] = useState(false);
+	const [isRenamingChat, setIsRenamingChat] = useState(false);
 	const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
 	const [profilesByUserId, setProfilesByUserId] = useState<Record<number, UserProfile | null>>({});
 
@@ -89,6 +92,11 @@ const ChatForUser: React.FC = () => {
 		}
 		return chats.find((chat) => chat.chat_id === activeChatId) ?? null;
 	}, [activeChatId, chats]);
+
+	useEffect(() => {
+		setChatNameDraft(activeChat?.name?.trim() ?? '');
+		setIsChatNameEditorOpen(false);
+	}, [activeChat?.chat_id, activeChat?.name]);
 
 	const selectChat = async (chatId: number) => {
 		setActiveChatId(chatId);
@@ -227,6 +235,52 @@ const ChatForUser: React.FC = () => {
 		}
 	};
 
+	const openChatNameEditor = () => {
+		if (!activeChat) {
+			return;
+		}
+
+		setChatNameDraft(activeChat.name?.trim() ?? '');
+		setIsChatNameEditorOpen(true);
+	};
+
+	const closeChatNameEditor = () => {
+		if (isRenamingChat) {
+			return;
+		}
+
+		setIsChatNameEditorOpen(false);
+		setChatNameDraft(activeChat?.name?.trim() ?? '');
+	};
+
+	const handleRenameChat = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+
+		if (activeChatId == null || isRenamingChat) {
+			return;
+		}
+
+		const normalizedName = chatNameDraft.trim();
+		if (!normalizedName) {
+			toast.error('Введите новое название чата');
+			return;
+		}
+
+		try {
+			setIsRenamingChat(true);
+			const updated = await renameChat(activeChatId, { name: normalizedName });
+			setChatNameDraft(updated.name?.trim() ?? '');
+			await loadMyChats();
+			setIsChatNameEditorOpen(false);
+			toast.success('Название чата обновлено');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось переименовать чат';
+			toast.error(message);
+		} finally {
+			setIsRenamingChat(false);
+		}
+	};
+
 	return (
 		<section className="relative">
 			<div className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
@@ -320,6 +374,16 @@ const ChatForUser: React.FC = () => {
 							</button>
 							<button
 								type="button"
+								onClick={() => void openChatNameEditor()}
+								disabled={activeChatId == null}
+								className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-purple-50 transition hover:border-white/30 hover:bg-white/10 disabled:opacity-60"
+								aria-label="Изменить название чата"
+							>
+								<Edit2 className="h-4 w-4" />
+								Изменить название
+							</button>
+							<button
+								type="button"
 								onClick={() => void handleLeaveChat()}
 								disabled={activeChatId == null || isLeavingChat}
 								className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-60"
@@ -330,6 +394,44 @@ const ChatForUser: React.FC = () => {
 							</button>
 						</div>
 					</div>
+
+					{activeChat && isChatNameEditorOpen && (
+						<form onSubmit={handleRenameChat} className="mb-4 rounded-xl border border-white/10 bg-black/20 p-3">
+							<div className="mb-3 flex items-center justify-between gap-3">
+								<p className="text-xs uppercase tracking-wide text-purple-200/70">Название чата</p>
+								<button
+									type="button"
+									onClick={closeChatNameEditor}
+									disabled={isRenamingChat}
+									className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-purple-50 transition hover:border-white/30 hover:bg-white/10 disabled:opacity-60"
+								>
+									<X className="h-4 w-4" />
+									Закрыть
+								</button>
+							</div>
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+								<div className="min-w-0 flex-1">
+									<input
+										id="chat-name"
+										type="text"
+										value={chatNameDraft}
+										onChange={(event) => setChatNameDraft(event.target.value)}
+										placeholder={`Чат #${activeChat.chat_id}`}
+										disabled={isRenamingChat}
+										className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-purple-100/40 focus:border-purple-400/50 disabled:opacity-60"
+									/>
+								</div>
+								<button
+									type="submit"
+									disabled={isRenamingChat || !chatNameDraft.trim()}
+									className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-400/40 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-50 transition hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+								>
+									<Edit2 className="h-4 w-4" />
+									{isRenamingChat ? 'Сохранение...' : 'Сохранить'}
+								</button>
+							</div>
+						</form>
+					)}
 
 					<div className="mb-4 max-h-[50vh] space-y-3 overflow-y-auto rounded-xl bg-black/30 p-3 sm:p-4">
 						{isMessagesLoading && activeChatId != null && (
