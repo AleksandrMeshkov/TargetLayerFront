@@ -33,6 +33,21 @@ export type TaskCreatePayload = {
   order_index?: number;
 };
 
+export type RoadmapCreatePayload = {
+  title: string;
+  description?: string | null;
+  team_id?: number | null;
+  tasks?: TaskCreatePayload[];
+};
+
+export type RoadmapCreateResponse = {
+  status?: string;
+  roadmap_id: number;
+  tasks: number;
+  message?: string;
+  detail?: string;
+};
+
 export type TaskUpdatePayload = {
   title?: string | null;
   description?: string | null;

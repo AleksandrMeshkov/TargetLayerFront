@@ -1,7 +1,23 @@
 import { fetchWithAuthRetry } from '../auth/fetchWithAuthRetry';
 import { parseApiError } from '../../utils/api/parseApiError';
-import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapItem, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
+import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapCreatePayload, RoadmapCreateResponse, RoadmapItem, RoadmapTask, RoadmapsListResponse, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
 } from '../../types/roadmapsTypes/roadmapsTypes';
+
+export async function createRoadmap(payload: RoadmapCreatePayload): Promise<RoadmapCreateResponse> {
+  const response = await fetchWithAuthRetry('/api/v1/roadmaps', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось создать роудмап'));
+  }
+
+  return (await response.json()) as RoadmapCreateResponse;
+}
 
 export async function getMyRoadmaps(): Promise<RoadmapsListResponse> {
   const response = await fetchWithAuthRetry('/api/v1/roadmaps/my-roadmaps', {

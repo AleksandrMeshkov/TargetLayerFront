@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Circle, LoaderCircle, Map, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
+  createRoadmap,
   createRoadmapTask,
   deleteRoadmap,
   deleteRoadmapTask,
@@ -12,6 +13,11 @@ import {
   updateRoadmapTask,
 } from '../../api/roadmaps/roadmapApi';
 import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
+
+type RoadmapTaskDraft = {
+  title: string;
+  description: string;
+};
 
 function formatDate(dateValue: string): string {
   const date = new Date(dateValue);
@@ -35,6 +41,12 @@ const Roadmaps: React.FC = () => {
   const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
   const [tasksCache, setTasksCache] = useState<Record<number, RoadmapTask[]>>({});
   const [isLoadingRoadmaps, setIsLoadingRoadmaps] = useState(true);
+  const [isCreateRoadmapOpen, setIsCreateRoadmapOpen] = useState(false);
+  const [isCreatingRoadmap, setIsCreatingRoadmap] = useState(false);
+  const [newRoadmapTitle, setNewRoadmapTitle] = useState('');
+  const [newRoadmapDescription, setNewRoadmapDescription] = useState('');
+  const [newRoadmapTeamId, setNewRoadmapTeamId] = useState('');
+  const [newRoadmapTasks, setNewRoadmapTasks] = useState<RoadmapTaskDraft[]>([{ title: '', description: '' }]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [taskBusyIds, setTaskBusyIds] = useState<Record<number, boolean>>({});
@@ -50,43 +62,52 @@ const Roadmaps: React.FC = () => {
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
-  useEffect(() => {
-    const loadRoadmaps = async () => {
-      setIsLoadingRoadmaps(true);
-      try {
-        const response = await getMyRoadmaps();
-        const items = [...response.roadmaps].sort((left, right) => (
-          new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
-        ));
+  const reloadRoadmaps = async (preferredRoadmapId?: number): Promise<void> => {
+    setIsLoadingRoadmaps(true);
+    try {
+      const response = await getMyRoadmaps();
+      const items = [...response.roadmaps].sort((left, right) => (
+        new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
+      ));
 
-        setRoadmaps(items);
+      setRoadmaps(items);
 
-        if (items.length > 0) {
-          const firstRoadmapId = items[0].roadmap_id;
-          setSelectedRoadmapId(firstRoadmapId);
-
-          if (!tasksCache[firstRoadmapId]) {
-            setIsLoadingTasks(true);
-            try {
-              const tasks = await getRoadmapTasks(firstRoadmapId);
-              setTasksCache((prev) => ({ ...prev, [firstRoadmapId]: sortTasks(tasks) }));
-            } catch (error) {
-              const message = error instanceof Error ? error.message : 'Не удалось загрузить задачи роудмапа';
-              toast.error(message);
-            } finally {
-              setIsLoadingTasks(false);
-            }
-          }
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Не удалось загрузить роудмапы';
-        toast.error(message);
-      } finally {
-        setIsLoadingRoadmaps(false);
+      if (items.length === 0) {
+        setSelectedRoadmapId(null);
+        return;
       }
-    };
 
-    void loadRoadmaps();
+      const selectedId = preferredRoadmapId != null
+        ? items.find((item) => item.roadmap_id === preferredRoadmapId)?.roadmap_id ?? items[0].roadmap_id
+        : items[0].roadmap_id;
+
+      setSelectedRoadmapId(selectedId);
+
+      const selectedItem = items.find((item) => item.roadmap_id === selectedId);
+      if (selectedItem && selectedItem.tasks.length > 0) {
+        setTasksCache((prev) => ({ ...prev, [selectedId]: sortTasks(selectedItem.tasks) }));
+      } else {
+        setIsLoadingTasks(true);
+        try {
+          const tasks = await getRoadmapTasks(selectedId);
+          setTasksCache((prev) => ({ ...prev, [selectedId]: sortTasks(tasks) }));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Не удалось загрузить задачи роудмапа';
+          toast.error(message);
+        } finally {
+          setIsLoadingTasks(false);
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось загрузить роудмапы';
+      toast.error(message);
+    } finally {
+      setIsLoadingRoadmaps(false);
+    }
+  };
+
+  useEffect(() => {
+    void reloadRoadmaps();
   }, []);
 
   const selectedRoadmap = useMemo(
@@ -408,6 +429,96 @@ const Roadmaps: React.FC = () => {
     setIsAddTaskOpen(true);
   };
 
+  const resetCreateRoadmapForm = () => {
+    setNewRoadmapTitle('');
+    setNewRoadmapDescription('');
+    setNewRoadmapTeamId('');
+    setNewRoadmapTasks([{ title: '', description: '' }]);
+  };
+
+  const openCreateRoadmap = () => {
+    resetCreateRoadmapForm();
+    setIsCreateRoadmapOpen(true);
+  };
+
+  const handleCreateRoadmapTaskChange = (index: number, field: keyof RoadmapTaskDraft, value: string) => {
+    setNewRoadmapTasks((prev) => prev.map((task, taskIndex) => (
+      taskIndex === index ? { ...task, [field]: value } : task
+    )));
+  };
+
+  const addCreateRoadmapTask = () => {
+    setNewRoadmapTasks((prev) => [...prev, { title: '', description: '' }]);
+  };
+
+  const removeCreateRoadmapTask = (index: number) => {
+    setNewRoadmapTasks((prev) => {
+      if (prev.length === 1) {
+        return [{ title: '', description: '' }];
+      }
+
+      return prev.filter((_, taskIndex) => taskIndex !== index);
+    });
+  };
+
+  const handleCreateRoadmap = async (): Promise<void> => {
+    const title = newRoadmapTitle.trim();
+    const description = newRoadmapDescription.trim();
+    const teamIdValue = newRoadmapTeamId.trim();
+
+    if (!title) {
+      toast.error('Введите название роудмапа');
+      return;
+    }
+
+    let teamId: number | null = null;
+    if (teamIdValue) {
+      teamId = Number(teamIdValue);
+      if (!Number.isInteger(teamId) || teamId <= 0) {
+        toast.error('ID команды должен быть положительным числом');
+        return;
+      }
+    }
+
+    const normalizedTasks = newRoadmapTasks.map((task) => ({
+      title: task.title.trim(),
+      description: task.description.trim(),
+    }));
+
+    if (normalizedTasks.some((task) => !task.title && task.description)) {
+      toast.error('У задачи должно быть название или удалите пустую строку');
+      return;
+    }
+
+    const tasks = normalizedTasks
+      .filter((task) => task.title.length > 0)
+      .map((task, index) => ({
+        title: task.title,
+        description: task.description.length > 0 ? task.description : null,
+        order_index: index,
+      }));
+
+    setIsCreatingRoadmap(true);
+    try {
+      const created = await createRoadmap({
+        title,
+        description: description.length > 0 ? description : null,
+        team_id: teamId,
+        tasks: tasks.length > 0 ? tasks : undefined,
+      });
+
+      await reloadRoadmaps(created.roadmap_id);
+      resetCreateRoadmapForm();
+      setIsCreateRoadmapOpen(false);
+      toast.success('Роудмап создан');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось создать роудмап';
+      toast.error(message);
+    } finally {
+      setIsCreatingRoadmap(false);
+    }
+  };
+
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
@@ -422,19 +533,29 @@ const Roadmaps: React.FC = () => {
             </div>
           </div>
 
-          {selectedRoadmap ? (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={openManage}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-purple-100 transition hover:bg-white/10"
-              disabled={isDeletingRoadmap || isSavingGoal}
+              onClick={openCreateRoadmap}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-2 text-sm text-purple-50 transition hover:bg-purple-500/30"
+              disabled={isCreatingRoadmap}
             >
-              <Pencil className="h-4 w-4" />
-              Управление
+              <Plus className="h-4 w-4" />
+              Создать роудмап
             </button>
-          ) : (
-            <div className="text-sm text-purple-100/60">&nbsp;</div>
-          )}
+
+            {selectedRoadmap ? (
+              <button
+                type="button"
+                onClick={openManage}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-purple-100 transition hover:bg-white/10"
+                disabled={isDeletingRoadmap || isSavingGoal}
+              >
+                <Pencil className="h-4 w-4" />
+                Управление
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -838,6 +959,143 @@ const Roadmaps: React.FC = () => {
           )}
         </div>
       </div>
+
+      {isCreateRoadmapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsCreateRoadmapOpen(false)}
+          />
+
+          <div className="relative w-full max-w-3xl rounded-3xl border border-white/10 bg-[#080512] p-5 shadow-none">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-purple-200/70">Новый роудмап</p>
+                <h3 className="mt-2 text-xl font-bold text-purple-50">Ручное создание роудмапа</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateRoadmapOpen(false)}
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-black/30 p-2 text-purple-100 transition hover:bg-white/10"
+                aria-label="Закрыть"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-sm font-medium text-purple-50">Параметры роудмапа</p>
+                <div className="mt-3 grid gap-3">
+                  <input
+                    value={newRoadmapTitle}
+                    onChange={(event) => setNewRoadmapTitle(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    placeholder="Название роудмапа"
+                    disabled={isCreatingRoadmap}
+                  />
+                  <textarea
+                    value={newRoadmapDescription}
+                    onChange={(event) => setNewRoadmapDescription(event.target.value)}
+                    className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    placeholder="Описание роудмапа (необязательно)"
+                    rows={3}
+                    disabled={isCreatingRoadmap}
+                  />
+                  <input
+                    value={newRoadmapTeamId}
+                    onChange={(event) => setNewRoadmapTeamId(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    placeholder="ID команды, если роудмап нужно сразу привязать к команде"
+                    inputMode="numeric"
+                    disabled={isCreatingRoadmap}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-purple-50">Стартовые задачи</p>
+                    <p className="mt-1 text-xs text-purple-100/60">Можно оставить пустыми и создать роудмап без задач.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addCreateRoadmapTask}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-purple-100 transition hover:bg-white/10"
+                    disabled={isCreatingRoadmap}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Добавить задачу
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {newRoadmapTasks.map((task, index) => (
+                    <div key={index} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs uppercase tracking-wide text-purple-200/60">Задача #{index + 1}</p>
+                        <button
+                          type="button"
+                          onClick={() => removeCreateRoadmapTask(index)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-1.5 text-xs text-purple-100/70 transition hover:bg-white/10"
+                          disabled={isCreatingRoadmap}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Удалить
+                        </button>
+                      </div>
+
+                      <div className="mt-3 grid gap-3">
+                        <input
+                          value={task.title}
+                          onChange={(event) => handleCreateRoadmapTaskChange(index, 'title', event.target.value)}
+                          className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                          placeholder="Название задачи"
+                          disabled={isCreatingRoadmap}
+                        />
+                        <textarea
+                          value={task.description}
+                          onChange={(event) => handleCreateRoadmapTaskChange(index, 'description', event.target.value)}
+                          className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                          placeholder="Описание задачи (необязательно)"
+                          rows={2}
+                          disabled={isCreatingRoadmap}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateRoadmapOpen(false)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-100 transition hover:bg-white/10"
+                  disabled={isCreatingRoadmap}
+                >
+                  <X className="h-4 w-4" />
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCreateRoadmap()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-3 text-sm text-purple-50 transition hover:bg-purple-500/30"
+                  disabled={isCreatingRoadmap}
+                >
+                  {isCreatingRoadmap ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Создать роудмап
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

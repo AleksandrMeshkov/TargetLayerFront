@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { createRoadmapTask, deleteRoadmapTask, setRoadmapTaskComplete, shareRoadmapToTeam, updateRoadmapGoal, updateRoadmapTask } from '../../api/roadmaps/roadmapApi';
-import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapTask, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
+import { createRoadmap, createRoadmapTask, deleteRoadmapTask, setRoadmapTaskComplete, shareRoadmapToTeam, updateRoadmapGoal, updateRoadmapTask } from '../../api/roadmaps/roadmapApi';
+import type { GoalUpdatePayload, GoalUpdateResponse, RoadmapCreatePayload, RoadmapCreateResponse, RoadmapTask, ShareRoadmapPayload, ShareRoadmapResponse, TaskCreatePayload, TaskUpdatePayload,
 } from '../../types/roadmapsTypes/roadmapsTypes';
 
 export function useRoadmapActions() {
@@ -21,6 +21,10 @@ export function useRoadmapActions() {
       setIsLoading(false);
     }
   }, []);
+
+  const createRoadmapEntry = useCallback((payload: RoadmapCreatePayload): Promise<RoadmapCreateResponse> => (
+    run(() => createRoadmap(payload))
+  ), [run]);
 
   const createTask = useCallback((roadmapId: number, payload: TaskCreatePayload) => (
     run(() => createRoadmapTask(roadmapId, payload))
@@ -49,6 +53,7 @@ export function useRoadmapActions() {
   return {
     isLoading,
     error,
+    createRoadmap: createRoadmapEntry,
     createTask,
     updateTask,
     removeTask,
