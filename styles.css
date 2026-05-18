@@ -1,4 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap");
+@font-face {
+  font-family: 'MT Sans Full';
+  src: local('MT Sans Full'), local('MTSansFull');
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
+}
 
 @tailwind base;
 @tailwind components;
@@ -17,6 +23,12 @@
 
 body {
   @apply bg-[#0a051a] text-white antialiased;
+  font-family: 'MT Sans Full', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-weight: 500;
+}
+
+html {
+  font-size: 18px;
 }
 
 ::-webkit-scrollbar {

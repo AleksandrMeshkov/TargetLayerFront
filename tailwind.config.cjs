@@ -8,9 +8,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'Inter'", "sans-serif"],
-        serif: ["'Lora'", "serif"],
-        mono: ["'Space Mono'", "monospace"],
+        sans: ["'MT Sans Full'", 'ui-sans-serif', 'system-ui'],
+        serif: ["'MT Sans Full'", 'ui-serif', 'Georgia'],
+        mono: ["'MT Sans Full'", 'ui-monospace', 'SFMono-Regular'],
       },
       colors: {
         border: 'hsl(var(--border))',

@@ -40,9 +40,6 @@ export default function Home() {
                 Попробовать сейчас
                 <ChevronRight className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="bg-white/5 border border-white/10 px-8 py-4 rounded-2xl font-bold hover:bg-white/10 transition-all">
-                Как это работает?
-              </button>
             </div>
           </motion.div>
 
@@ -60,7 +57,7 @@ export default function Home() {
                 </div>
                 <div>
                   <h3 className="font-bold">AI Анализ Цели</h3>
-                  <p className="text-xs text-purple-300/50">Обработка запроса...</p>
+                  <p className="text-xs text-purple-300/50">Обработка запроса</p>
                 </div>
               </div>
               

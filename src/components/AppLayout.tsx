@@ -31,8 +31,8 @@ const AppLayout: React.FC = () => {
     { label: 'Профиль', href: '/app/profile', icon: UserRound },
     { label: 'Команды', href: '/app/teams', icon: Shield },
     { label: 'Поиск пользователей', href: '/app/search', icon: Search },
-    { label: 'Чаты', href: '/app/chats', icon: MessageCircle },
-    { label: 'АИ чат', href: '/app/chat', icon: Bot },
+    { label: 'Сообщения', href: '/app/chats', icon: MessageCircle },
+    { label: 'ИИ-помощник', href: '/app/chat', icon: Bot },
     { label: 'Роудмапы', href: '/app/roadmaps', icon: Map },
   ];
 
