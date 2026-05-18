@@ -292,7 +292,7 @@ const ChatForUser: React.FC = () => {
 				</div>
 
 				<p className="mt-3 max-w-3xl text-sm text-purple-100/70">
-					Чаты с пользователями (групповые) и чат вашей команды.
+					Ваши сообщения
 				</p>
 			</div>
 
@@ -332,10 +332,7 @@ const ChatForUser: React.FC = () => {
 									}`}
 								>
 									<p className="text-sm font-medium text-purple-50">
-										{chat.name?.trim() ? chat.name : `Чат #${chat.chat_id}`}
-									</p>
-									<p className="mt-1 text-xs text-purple-100/60">
-										{chat.type} • team #{chat.team_id}
+										{chat.name?.trim() ?? ''}
 									</p>
 									<p className="mt-1 text-[11px] text-purple-100/50">
 										Создан: {formatDateTime(chat.created_at)}
@@ -349,15 +346,12 @@ const ChatForUser: React.FC = () => {
 				<div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4">
 					<div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
 						<div>
-							<p className="text-xs uppercase tracking-wide text-purple-200/70">Активный чат</p>
 							<p className="text-sm font-medium text-purple-50">
-								{activeChat
-									? `${activeChat.name?.trim() ? activeChat.name : `#${activeChat.chat_id}`} (team #${activeChat.team_id})`
-									: 'Чат не выбран'}
+								{activeChat?.name?.trim() ?? ''}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
-							{isSending && <p className="text-xs text-purple-200/80">Отправка...</p>}
+							{isSending && <p className="text-xs text-purple-200/80">Отправка</p>}
 							<button
 								type="button"
 								onClick={() => void handleToggleParticipants()}
@@ -416,7 +410,7 @@ const ChatForUser: React.FC = () => {
 										type="text"
 										value={chatNameDraft}
 										onChange={(event) => setChatNameDraft(event.target.value)}
-										placeholder={`Чат #${activeChat.chat_id}`}
+										placeholder={activeChat?.name?.trim() ?? ''}
 										disabled={isRenamingChat}
 										className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-purple-100/40 focus:border-purple-400/50 disabled:opacity-60"
 									/>
@@ -544,7 +538,7 @@ const ChatForUser: React.FC = () => {
 									{participantsChatId === activeChatId ? ` (${participants.length})` : ''}
 								</h2>
 								<p className="mt-1 text-sm text-purple-100/70">
-									{activeChat?.name?.trim() ? activeChat.name : `Чат #${activeChatId}`}
+									{activeChat?.name?.trim() ?? ''}
 								</p>
 							</div>
 							<button
