@@ -315,7 +315,7 @@ const Chat: React.FC = () => {
       return;
     }
 
-    const confirmed = window.confirm(`Удалить чат #${conversationId}? Это действие нельзя отменить.`);
+    const confirmed = window.confirm(`Удалить чат? Это действие нельзя отменить.`);
     if (!confirmed) {
       return;
     }
@@ -343,7 +343,7 @@ const Chat: React.FC = () => {
         setMessages(nextHistoryMessages.map(mapHistoryMessage));
       }
 
-      toast.success(`Чат #${conversationId} удален`);
+      toast.success(`Чат удален`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось удалить чат';
       toast.error(message);
@@ -499,9 +499,6 @@ const Chat: React.FC = () => {
                           {task.description && (
                             <p className="mt-1 text-xs text-purple-100/70">{task.description}</p>
                           )}
-                          <p className="mt-1 text-xs text-purple-200/70">
-                            Дедлайн: +{task.deadline_offset_days} дн.
-                          </p>
                         </div>
                       ))}
                     </div>
@@ -524,7 +521,7 @@ const Chat: React.FC = () => {
                 }
               }}
               rows={3}
-              placeholder="Опишите цель или задачу, и AI предложит roadmap..."
+              placeholder="Опишите цель или задачу"
               className="w-full resize-none rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white outline-none placeholder:text-purple-100/50 focus:border-purple-400/50"
             />
             <div className="mt-2 flex justify-end">

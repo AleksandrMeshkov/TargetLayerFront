@@ -602,9 +602,6 @@ const Roadmaps: React.FC = () => {
                       <p className="text-sm font-semibold text-purple-50">
                         {roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
                       </p>
-                      <p className="mt-1 text-xs text-purple-100/60">
-                        Обновлен: {formatDate(roadmap.updated_at)}
-                      </p>
                     </div>
                     <span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">
                       {cachedTasks ? cachedTasks.length : roadmap.tasks.length} задач
@@ -634,7 +631,6 @@ const Roadmaps: React.FC = () => {
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-purple-200/70">Активный роудмап</p>
                     <h2 className="mt-2 text-2xl font-bold text-purple-50">
                       {selectedRoadmap.goal?.title ?? `Роудмап #${selectedRoadmap.roadmap_id}`}
                     </h2>
@@ -647,7 +643,6 @@ const Roadmaps: React.FC = () => {
 
                   <div className="flex flex-wrap items-start justify-end gap-3">
                     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/75">
-                      <p>Статус: {selectedRoadmap.completed ? 'Завершен' : 'В процессе'}</p>
                       <p className="mt-1">Задач: {selectedTasks?.length ?? selectedRoadmap.tasks.length}</p>
                     </div>
                   </div>
@@ -775,7 +770,6 @@ const Roadmaps: React.FC = () => {
 
                           <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70">
                             <p>{task.completed ? 'Выполнено' : 'Не выполнено'}</p>
-                            <p className="mt-1">Создано: {formatDate(task.created_at)}</p>
                           </div>
                         </div>
                       </div>
