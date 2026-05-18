@@ -3,38 +3,16 @@ import { CheckCircle2, Circle, LoaderCircle, Map, MessageCircle, Shield, Users, 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../../api/apiBase/apiBase';
-import {
-	getCurrentProfile,
-	getUserById,
-} from '../../api/auth/userClient';
-import {
-	deleteTeam,
-	getTeamMembers,
-	leaveTeam,
-	renameTeam,
-	updateMemberRole,
-} from '../../api/auth/teamClient';
+import { getCurrentProfile, getUserById} from '../../api/auth/userClient';
+import {deleteTeam, getTeamMembers, leaveTeam, renameTeam, updateMemberRole} from '../../api/auth/teamClient';
 import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
 import { createChat, getMyChats, getOrCreateTeamChat } from '../../api/chat/chatClient';
-import {
-	getMyRoadmaps,
-	getRoadmapsByTeam,
-	getRoadmapTasks,
-	deleteTeamRoadmap,
-	setRoadmapTaskComplete,
-	shareRoadmapToTeam,
-	copyRoadmap,
-} from '../../api/roadmaps/roadmapApi';
+import { getMyRoadmaps, getRoadmapsByTeam, getRoadmapTasks, deleteTeamRoadmap, setRoadmapTaskComplete, shareRoadmapToTeam,copyRoadmap} from '../../api/roadmaps/roadmapApi';
 import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
 
-type TeamLocationState = {
-	teamName?: string;
-};
+type TeamLocationState = { teamName?: string;};
 
-type TeamMemberView = {
-	membership: TeamMemberItem;
-	profile: UserProfile;
-};
+type TeamMemberView = { membership: TeamMemberItem; profile: UserProfile;};
 
 const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
 	if (!avatarPath) return null;
@@ -111,9 +89,8 @@ const TeamView: React.FC = () => {
 	const numericTeamId = Number(teamId);
 	const teamTitle = useMemo(() => {
 		if (displayTeamName) return displayTeamName;
-		if (Number.isFinite(numericTeamId) && numericTeamId > 0) return `Команда #${numericTeamId}`;
 		return 'Команда';
-	}, [displayTeamName, numericTeamId]);
+	}, [displayTeamName]);
 
 	const myMembership = useMemo(() => {
 		if (!myUserId) return null;
@@ -595,12 +572,6 @@ const TeamView: React.FC = () => {
 							</p>
 						</div>
 					</div>
-
-					<div className="flex items-center gap-2">
-						<span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-2.5 py-1 text-[11px] font-medium text-purple-200">
-							{Number.isFinite(numericTeamId) ? `Team #${numericTeamId}` : 'Team'}
-						</span>
-					</div>
 				</button>
 
 				<div className="relative flex-1 min-h-0 bg-gradient-to-br from-emerald-200/20 via-green-200/10 to-lime-200/20 p-3 sm:p-4 md:p-6">
@@ -678,9 +649,9 @@ const TeamView: React.FC = () => {
 													>
 														<div className="flex items-start justify-between gap-3">
 															<div>
-																<p className="text-xs uppercase tracking-wide text-purple-200/70">Роудмап #{roadmap.roadmap_id}</p>
+																<p className="text-xs uppercase tracking-wide text-purple-200/70">Список задач</p>
 																<h3 className="mt-2 text-sm font-semibold text-white">
-																	{roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
+																	{roadmap.goal?.title ?? 'Роудмап'}
 																</h3>
 															</div>
 															<span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-purple-100/80">
@@ -691,39 +662,7 @@ const TeamView: React.FC = () => {
 														{roadmap.goal?.description && (
 															<p className="mt-2 line-clamp-3 text-xs text-purple-100/70">{roadmap.goal.description}</p>
 														)}
-
-														<div className="mt-3 flex items-center justify-between text-xs text-purple-100/60">
-															<span>{roadmap.completed ? 'Завершен' : 'В процессе'}</span>
-															<span>Обновлен: {formatDate(roadmap.updated_at)}</span>
-														</div>
 													</button>
-													
-													<button
-														type="button"
-														onClick={(e) => {
-															e.stopPropagation();
-															void handleCopyRoadmap(roadmap.roadmap_id);
-														}}
-														disabled={isCopyingRoadmap}
-														className="mt-3 w-full rounded-lg border border-purple-400/40 bg-purple-500/20 py-1.5 text-xs font-semibold text-purple-100 transition hover:bg-purple-500/30 disabled:opacity-60"
-														title="Скопировать этот роудмап себе"
-													>
-														{isCopyingRoadmap ? 'Копирую...' : '📋 Скопировать'}
-													</button>
-													{isAdmin && (
-														<button
-															type="button"
-															onClick={(event) => {
-																event.stopPropagation();
-																void handleDeleteTeamRoadmap(roadmap.roadmap_id);
-															}}
-															disabled={isDeletingTeamRoadmap || isCopyingRoadmap}
-															className="mt-2 w-full rounded-lg border border-red-500/30 bg-red-500/10 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-60"
-															title="Удалить роудмап из команды"
-														>
-															{isDeletingTeamRoadmap ? 'Удаление...' : 'Удалить'}
-														</button>
-													)}
 												</div>
 										);
 										})}
@@ -733,10 +672,6 @@ const TeamView: React.FC = () => {
 										<div className="mt-4 rounded-xl border border-white/10 bg-black/15 p-4">
 											<div className="flex flex-wrap items-start justify-between gap-4">
 												<div>
-													<p className="text-xs uppercase tracking-wide text-purple-200/70">Открытый роудмап</p>
-													<h3 className="mt-2 text-lg font-semibold text-white">
-														{selectedTeamRoadmap.goal?.title ?? `Роудмап #${selectedTeamRoadmap.roadmap_id}`}
-													</h3>
 													{selectedTeamRoadmap.goal?.description && (
 														<p className="mt-2 max-w-3xl text-sm text-purple-100/70">
 															{selectedTeamRoadmap.goal.description}

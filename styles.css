@@ -27,6 +27,12 @@ body {
   font-weight: 500;
 }
 
+/* Improve mobile overflow handling */
+html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+img { max-width: 100%; height: auto; display: block; }
+body { overflow-wrap: anywhere; -webkit-font-smoothing:antialiased; }
+
 html {
   font-size: 18px;
 }

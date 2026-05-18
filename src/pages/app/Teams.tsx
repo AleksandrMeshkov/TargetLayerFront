@@ -138,9 +138,7 @@ const Teams: React.FC = () => {
 								onClick={() => navigate(`/app/teams/${team.team_id}`, { state: { teamName: team.name } })}
 								className="w-full rounded-2xl border border-white/10 bg-black/20 p-5 text-left transition-colors hover:border-purple-500/30"
 							>
-								<p className="text-xs uppercase tracking-wide text-purple-200/60">Команда #{team.team_id}</p>
 								<h2 className="mt-2 text-lg font-semibold text-white">{team.name}</h2>
-								<p className="mt-2 text-sm text-purple-100/70">Создана: {formatDate(team.created_at)}</p>
 							</button>
 						))}
 					</div>

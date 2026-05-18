@@ -21,7 +21,7 @@ const MouseFollower: React.FC = () => {
   }, [mouseX, mouseY]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#0a051a]">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#0a051a] hidden md:block">
       <motion.div
         style={{
           x: dx,
@@ -29,7 +29,7 @@ const MouseFollower: React.FC = () => {
           translateX: '-50%',
           translateY: '-50%',
         }}
-        className="absolute w-[600px] h-[600px] rounded-full bg-purple-600/20 blur-[120px]"
+        className="absolute w-[600px] h-[600px] rounded-full bg-purple-600/20 blur-[120px] lg:w-[500px] lg:h-[500px] lg:blur-[100px]"
       />
       <motion.div
         style={{
@@ -38,7 +38,7 @@ const MouseFollower: React.FC = () => {
           translateX: '-50%',
           translateY: '-50%',
         }}
-        className="absolute w-[300px] h-[300px] rounded-full bg-indigo-500/30 blur-[80px]"
+        className="absolute w-[300px] h-[300px] rounded-full bg-indigo-500/30 blur-[80px] lg:w-[220px] lg:h-[220px] lg:blur-[60px]"
       />
       <div
         className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center"

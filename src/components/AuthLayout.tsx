@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import MouseFollower from './MouseFollower';
 import brainRaspberry from '../assets/brain-raspberry.svg';
+import Logo from './Logo';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -20,11 +21,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
           <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/20 mb-4 border border-purple-400/30">
             <img src={brainRaspberry} alt="Логотип" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight font-serif">TargetLayer</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <Logo showIcon={false} />
+          </h1>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">

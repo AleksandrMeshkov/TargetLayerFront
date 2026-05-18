@@ -4,7 +4,7 @@ import { Bot, LogOut, MessageCircle, Map, Menu, Search, Shield, UserRound, X } f
 import { toast } from 'react-toastify';
 import { logoutUser } from '../api/auth/client';
 import { clearAuthSession } from '../api/auth/session';
-import brainRaspberry from '../assets/brain-raspberry.svg';
+import Logo from './Logo';
 
 export type AppLayoutOutletContext = {
   sidebarOpen: boolean;
@@ -47,7 +47,7 @@ const AppLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#080512] text-white flex flex-col">
       <header className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -57,8 +57,7 @@ const AppLayout: React.FC = () => {
               {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <Link to="/app" className="flex items-center gap-2">
-              <img src={brainRaspberry} alt="Иконка мозга" className="h-6 w-6 object-contain" />
-              <span className="font-serif text-lg font-bold">TargetLayer</span>
+              <Logo />
             </Link>
           </div>
 

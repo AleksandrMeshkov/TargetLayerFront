@@ -3,17 +3,16 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Brain, Zap, ChevronRight } from 'lucide-react';
 import MouseFollower from '../components/MouseFollower';
-import brainRaspberry from '../assets/brain-raspberry.svg';
+import Logo from '../components/Logo';
 
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-[#0a051a] text-white overflow-hidden">
       <MouseFollower />
       
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <nav className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <img src={brainRaspberry} alt="Иконка мозга" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold font-serif">TargetLayer</span>
+          <Logo />
         </div>
         <div className="flex items-center gap-6">
           <Link to="/login" className="text-sm font-medium text-purple-200/70 hover:text-white transition-colors">Вход</Link>
@@ -29,16 +28,16 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             
-            <h1 className="text-6xl lg:text-7xl font-bold leading-tight mb-8 font-serif">
-              Разложи свои <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">цели</span> на атомы
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 sm:mb-8 font-serif">
+              Разложи свои <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-500">цели</span> на атомы
             </h1>
-            <p className="text-xl text-purple-200/60 mb-10 max-w-lg leading-relaxed">
+            <p className="text-lg sm:text-xl text-purple-200/60 mb-6 sm:mb-10 max-w-lg leading-relaxed">
               TargetLayer использует ИИ для декомпозиции масштабных целей в понятные шаги. Достигай большего, не теряя фокуса.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link to="/register" className="bg-white text-[#0a051a] px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-purple-50 transition-all group">
+              <Link to="/register" className="bg-white text-[#0a051a] px-6 py-3 sm:px-8 sm:py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-purple-50 transition-all group">
                 Попробовать сейчас
-                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="group-hover:translate-x-1 transition-transform"/>
               </Link>
             </div>
           </motion.div>
@@ -49,14 +48,14 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.2 }}
             className="relative"
           >
-            <div className="absolute -inset-4 bg-purple-500/20 blur-3xl rounded-full" />
-            <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
+            <div className="absolute inset-0 sm:-inset-4 bg-purple-500/20 blur-3xl rounded-full" />
+            <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
                   <Brain className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold">AI Анализ Цели</h3>
+                  <h3 className="font-bold">ИИ Анализ Цели</h3>
                   <p className="text-xs text-purple-300/50">Обработка запроса</p>
                 </div>
               </div>

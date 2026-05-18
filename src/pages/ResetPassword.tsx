@@ -117,7 +117,7 @@ export default function ResetPassword() {
           type="submit"
           className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 group transition-all active:scale-[0.98]"
         >
-          {isSubmitting ? 'Сохранение...' : 'Сохранить новый пароль'}
+          {isSubmitting ? 'Сохранение' : 'Сохранить новый пароль'}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </button>
 
