@@ -1,40 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, LoaderCircle, Map, MessageCircle, Shield, Users, X } from 'lucide-react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { API_BASE_URL } from '../../api/apiBase/apiBase';
-import { getCurrentProfile, getUserById} from '../../api/auth/userClient';
-import {deleteTeam, getTeamMembers, leaveTeam, renameTeam, updateMemberRole} from '../../api/auth/teamClient';
-import type { TeamMemberItem, UserProfile } from '../../types/authTypes/authTypes';
-import { createChat, getMyChats, getOrCreateTeamChat } from '../../api/chat/chatClient';
-import { getMyRoadmaps, getRoadmapsByTeam, getRoadmapTasks, deleteTeamRoadmap, setRoadmapTaskComplete, shareRoadmapToTeam,copyRoadmap} from '../../api/roadmaps/roadmapApi';
-import type { RoadmapItem, RoadmapTask } from '../../types/roadmapsTypes/roadmapsTypes';
-
-type TeamLocationState = { teamName?: string;};
-
-type TeamMemberView = { membership: TeamMemberItem; profile: UserProfile;};
-
-const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
-	if (!avatarPath) return null;
-	if (avatarPath.startsWith('http')) return avatarPath;
-	return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
-};
-
-const getFullName = (profile: UserProfile): string => {
-	return [profile.surname, profile.name, profile.patronymic].filter(Boolean).join(' ');
-};
-
-const getInitials = (profile: UserProfile): string => {
-	const first = profile.name?.[0] ?? '';
-	const second = profile.surname?.[0] ?? '';
-	return `${first}${second}`.toUpperCase() || '??';
-};
-
-const formatRole = (teamRoleId: number): string => {
-	if (teamRoleId === 1) return 'Администратор';
-	if (teamRoleId === 2) return 'Участник';
-	return `Роль #${teamRoleId}`;
-};
+import React from 'react';
+import { LoaderCircle, Map, MessageCircle, Shield, Users, X } from 'lucide-react';
+import { useLocation, useParams } from 'react-router-dom';
+import { RoadmapCard } from '../../components/team/RoadmapCard';
+import { TeamMemberItem } from '../../components/team/TeamMemberItem';
+import { TaskItem } from '../../components/team/TaskItem';
+import { useTeamChat } from '../../hooks/teamHooks/useTeamChat';
+import { useTeamMembers } from '../../hooks/teamHooks/useTeamMembers';
+import { useTeamRoadmaps } from '../../hooks/teamHooks/useTeamRoadmaps';
+import { useTeamShareRoadmap } from '../../hooks/teamHooks/useTeamShareRoadmap';
+import type { TeamLocationState } from '../../types/teamTypes/teamTypes';
 
 const formatDate = (value: string): string => {
 	const date = new Date(value);
@@ -49,518 +23,83 @@ const formatDate = (value: string): string => {
 	}).format(date);
 };
 
-const sortTasks = (tasks: RoadmapTask[]): RoadmapTask[] => {
-	return [...tasks].sort((left, right) => left.order_index - right.order_index);
-};
-
 const TeamView: React.FC = () => {
-	const navigate = useNavigate();
 	const { teamId } = useParams<{ teamId: string }>();
 	const location = useLocation();
 	const { teamName } = (location.state as TeamLocationState | null) ?? {};
-
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [members, setMembers] = useState<TeamMemberView[]>([]);
-	const [loadedOnce, setLoadedOnce] = useState(false);
-	const [displayTeamName, setDisplayTeamName] = useState(teamName ?? '');
-	const [newTeamName, setNewTeamName] = useState(teamName ?? '');
-	const [savingName, setSavingName] = useState(false);
-	const [deleting, setDeleting] = useState(false);
-	const [myUserId, setMyUserId] = useState<number | null>(null);
-	const [teamRoadmaps, setTeamRoadmaps] = useState<RoadmapItem[]>([]);
-	const [isLoadingTeamRoadmaps, setIsLoadingTeamRoadmaps] = useState(false);
-	const [selectedTeamRoadmapId, setSelectedTeamRoadmapId] = useState<number | null>(null);
-	const [teamTasksCache, setTeamTasksCache] = useState<Record<number, RoadmapTask[]>>({});
-	const [isLoadingTeamRoadmapTasks, setIsLoadingTeamRoadmapTasks] = useState(false);
-	const [teamTaskBusyIds, setTeamTaskBusyIds] = useState<Record<number, boolean>>({});
-	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-	const [myRoadmaps, setMyRoadmaps] = useState<RoadmapItem[]>([]);
-	const [isLoadingMyRoadmaps, setIsLoadingMyRoadmaps] = useState(false);
-	const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
-	const [isSharingRoadmap, setIsSharingRoadmap] = useState(false);
-	const [isDeletingTeamRoadmap, setIsDeletingTeamRoadmap] = useState(false);
-	const [isOpeningTeamChat, setIsOpeningTeamChat] = useState(false);
-	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
-	const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
-	const [isCopyingRoadmap, setIsCopyingRoadmap] = useState(false);
-
 	const numericTeamId = Number(teamId);
-	const teamTitle = useMemo(() => {
-		if (displayTeamName) return displayTeamName;
-		return 'Команда';
-	}, [displayTeamName]);
 
-	const myMembership = useMemo(() => {
-		if (!myUserId) return null;
-		return members.find((entry) => entry.membership.user_id === myUserId) ?? null;
-	}, [members, myUserId]);
+	const {
+		isModalOpen,
+		loading,
+		error,
+		members,
+		loadedOnce,
+		teamTitle,
+		newTeamName,
+		setNewTeamName,
+		savingName,
+		deleting,
+		myUserId,
+		isAdmin,
+		updatingRoleUserId,
+		failedAvatarUserIds,
+		openTeamPanel,
+		closeTeamPanel,
+		refreshMembers,
+		handleRenameTeam,
+		handleDeleteTeam,
+		handleLeaveTeam,
+		updateMemberRole,
+		markAvatarAsFailed,
+	} = useTeamMembers({ teamId: numericTeamId, initialTeamName: teamName ?? '' });
 
-	const isAdmin = myMembership?.membership.team_role_id === 1;
-	const isTeamChatDisabled = (
-		isOpeningTeamChat
-		|| !Number.isFinite(numericTeamId)
-		|| numericTeamId <= 0
-	);
+	const {
+		teamRoadmaps,
+		isLoadingTeamRoadmaps,
+		selectedTeamRoadmapId,
+		selectedTeamRoadmap,
+		visibleTeamRoadmapTasks,
+		isLoadingTeamRoadmapTasks,
+		teamTaskBusyIds,
+		isDeletingTeamRoadmap,
+		isCopyingRoadmap,
+		loadTeamRoadmaps,
+		selectTeamRoadmap,
+		clearSelectedTeamRoadmap,
+		toggleTeamTaskComplete,
+		copyRoadmap,
+		deleteTeamRoadmap,
+	} = useTeamRoadmaps({ teamId: numericTeamId });
 
-	const selectedTeamRoadmap = useMemo(
-		() => teamRoadmaps.find((roadmap) => roadmap.roadmap_id === selectedTeamRoadmapId) ?? null,
-		[teamRoadmaps, selectedTeamRoadmapId],
-	);
+	const {
+		isShareModalOpen,
+		myRoadmaps,
+		isLoadingMyRoadmaps,
+		selectedRoadmapId,
+		setSelectedRoadmapId,
+		isSharingRoadmap,
+		openShareModal,
+		closeShareModal,
+		shareRoadmap,
+	} = useTeamShareRoadmap({ teamId: numericTeamId, isAdmin: Boolean(isAdmin), onShared: loadTeamRoadmaps });
 
-	const visibleTeamRoadmapTasks = useMemo(() => {
-		if (!selectedTeamRoadmap) {
-			return [];
-		}
-
-		const cached = selectedTeamRoadmapId != null ? teamTasksCache[selectedTeamRoadmapId] : undefined;
-		return sortTasks(cached ?? selectedTeamRoadmap.tasks ?? []);
-	}, [selectedTeamRoadmap, selectedTeamRoadmapId, teamTasksCache]);
-
-	const loadTeamRoadmaps = async () => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			return;
-		}
-
-		try {
-			setIsLoadingTeamRoadmaps(true);
-			const response = await getRoadmapsByTeam(numericTeamId);
-			const sortedRoadmaps = [...response.roadmaps].sort(
-				(left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime(),
-			);
-			setTeamRoadmaps(sortedRoadmaps);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить роудмапы команды';
-			toast.error(message);
-		} finally {
-			setIsLoadingTeamRoadmaps(false);
-		}
-	};
-
-	const fetchMembers = async () => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			const message = 'Некорректный идентификатор команды';
-			setError(message);
-			toast.error(message);
-			return;
-		}
-
-		try {
-			setLoading(true);
-			setError(null);
-
-			const membersResponse = await getTeamMembers(numericTeamId);
-			const users = await Promise.all(
-				membersResponse.users.map(async (membership) => {
-					const profile = await getUserById(membership.user_id);
-					return { membership, profile };
-				}),
-			);
-
-			setMembers(users);
-			setLoadedOnce(true);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить участников команды';
-			setError(message);
-			toast.error(message);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		const fetchCurrentUser = async () => {
-			try {
-				const me = await getCurrentProfile();
-				if (typeof me.user_id === 'number') {
-					setMyUserId(me.user_id);
-				}
-			} catch {
-			}
-		};
-
-		fetchCurrentUser();
-		fetchMembers();
-		loadTeamRoadmaps();
-	}, []);
-
-	useEffect(() => {
-		setSelectedTeamRoadmapId(null);
-		setIsLoadingTeamRoadmapTasks(false);
-	}, [numericTeamId]);
-
-	const handleSelectTeamRoadmap = async (roadmapId: number): Promise<void> => {
-		if (selectedTeamRoadmapId === roadmapId) {
-			setSelectedTeamRoadmapId(null);
-			return;
-		}
-
-		setSelectedTeamRoadmapId(roadmapId);
-
-		if (teamTasksCache[roadmapId]) {
-			return;
-		}
-
-		setIsLoadingTeamRoadmapTasks(true);
-		try {
-			const tasks = await getRoadmapTasks(roadmapId);
-			setTeamTasksCache((prev) => ({ ...prev, [roadmapId]: sortTasks(tasks) }));
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить задачи роудмапа';
-			toast.error(message);
-		} finally {
-			setIsLoadingTeamRoadmapTasks(false);
-		}
-	};
-
-	const setTeamTaskBusy = (taskId: number, busy: boolean) => {
-		setTeamTaskBusyIds((prev) => ({ ...prev, [taskId]: busy }));
-	};
-
-	const updateTeamRoadmapTasksState = (roadmapId: number, updater: (tasks: RoadmapTask[]) => RoadmapTask[]) => {
-		setTeamRoadmaps((prev) => prev.map((item) => {
-			if (item.roadmap_id !== roadmapId) {
-				return item;
-			}
-			return {
-				...item,
-				tasks: updater(item.tasks),
-			};
-		}));
-	};
-
-	const updateCachedTeamTask = (roadmapId: number, updatedTask: RoadmapTask) => {
-		setTeamTasksCache((prev) => {
-			const current = prev[roadmapId];
-			if (!current) {
-				return prev;
-			}
-			return {
-				...prev,
-				[roadmapId]: current.map((task) => (task.task_id === updatedTask.task_id ? updatedTask : task)),
-			};
-		});
-
-		updateTeamRoadmapTasksState(roadmapId, (tasks) => tasks.map((task) => (
-			task.task_id === updatedTask.task_id ? updatedTask : task
-		)));
-	};
-
-	const handleToggleTeamTaskComplete = async (task: RoadmapTask): Promise<void> => {
-		if (selectedTeamRoadmapId == null) {
-			return;
-		}
-
-		const nextCompleted = !task.completed;
-		setTeamTaskBusy(task.task_id, true);
-		try {
-			const updated = await setRoadmapTaskComplete(selectedTeamRoadmapId, task.task_id, nextCompleted);
-			updateCachedTeamTask(selectedTeamRoadmapId, updated);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось обновить статус задачи';
-			toast.error(message);
-		} finally {
-			setTeamTaskBusy(task.task_id, false);
-		}
-	};
-
-	const handleOpenTeamPanel = async () => {
-		setIsModalOpen(true);
-		if (!loadedOnce) {
-			await fetchMembers();
-		}
-	};
-
-	const handleCloseTeamPanel = () => {
-		setIsModalOpen(false);
-	};
-
-	const handleUpdateMemberRole = async (userId: number, newRoleId: number) => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			return;
-		}
-
-		setUpdatingRoleUserId(userId);
-		try {
-			const updatedMember = await updateMemberRole(numericTeamId, userId, newRoleId);
-			setMembers((prev) =>
-				prev.map((entry) =>
-					entry.membership.user_id === userId
-						? { ...entry, membership: { ...entry.membership, team_role_id: updatedMember.team_role_id } }
-						: entry
-				)
-			);
-			const roleText = newRoleId === 1 ? 'Администратор' : 'Участник';
-			toast.success(`Пользователь теперь ${roleText}`);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось обновить роль';
-			toast.error(message);
-		} finally {
-			setUpdatingRoleUserId(null);
-		}
-	};
-
-	const handleOpenShareModal = async () => {
-		if (!isAdmin) {
-			toast.error('Поделиться роудмапом может только администратор команды');
-			return;
-		}
-
-		setIsShareModalOpen(true);
-		setSelectedRoadmapId(null);
-
-		try {
-			setIsLoadingMyRoadmaps(true);
-			const response = await getMyRoadmaps();
-			const personalRoadmaps = response.roadmaps
-				.filter((roadmap) => roadmap.team_id == null)
-				.sort((left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime());
-			setMyRoadmaps(personalRoadmaps);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось загрузить личные роудмапы';
-			toast.error(message);
-		} finally {
-			setIsLoadingMyRoadmaps(false);
-		}
-	};
-
-	const handleCloseShareModal = () => {
-		if (isSharingRoadmap) {
-			return;
-		}
-
-		setIsShareModalOpen(false);
-		setSelectedRoadmapId(null);
-	};
-
-	const handleShareRoadmap = async () => {
-		if (!selectedRoadmapId) {
-			toast.error('Выберите роудмап для шаринга');
-			return;
-		}
-
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			toast.error('Некорректный идентификатор команды');
-			return;
-		}
-
-		try {
-			setIsSharingRoadmap(true);
-			await shareRoadmapToTeam(selectedRoadmapId, { team_id: numericTeamId });
-			toast.success('Роудмап успешно добавлен в команду');
-			setIsShareModalOpen(false);
-			setSelectedRoadmapId(null);
-			await loadTeamRoadmaps();
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось поделиться роудмапом';
-			toast.error(message);
-		} finally {
-			setIsSharingRoadmap(false);
-		}
-	};
-
-	const handleRenameTeam = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const normalizedName = newTeamName.trim();
-
-		if (!normalizedName) {
-			toast.error('Введите новое название команды');
-			return;
-		}
-
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			toast.error('Некорректный идентификатор команды');
-			return;
-		}
-
-		try {
-			setSavingName(true);
-			const updated = await renameTeam(numericTeamId, { name: normalizedName });
-			setDisplayTeamName(updated.name);
-			setNewTeamName(updated.name);
-			toast.success('Название команды обновлено');
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось переименовать команду';
-			toast.error(message);
-		} finally {
-			setSavingName(false);
-		}
-	};
-
-	const handleDeleteTeam = async () => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			toast.error('Некорректный идентификатор команды');
-			return;
-		}
-
-		const confirmed = window.confirm('Удалить команду? Это действие нельзя отменить.');
-		if (!confirmed) {
-			return;
-		}
-
-		try {
-			setDeleting(true);
-			await deleteTeam(numericTeamId);
-			toast.success('Команда удалена');
-			navigate('/app/teams', { replace: true });
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось удалить команду';
-			toast.error(message);
-		} finally {
-			setDeleting(false);
-		}
-	};
-
-	const handleLeaveTeam = async () => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			toast.error('Некорректный идентификатор команды');
-			return;
-		}
-
-		const confirmed = window.confirm('Выйти из команды? Это действие нельзя отменить.');
-		if (!confirmed) {
-			return;
-		}
-
-		try {
-			setDeleting(true);
-			await leaveTeam(numericTeamId);
-			
-			// Чат команды будет автоматически удален из списка при следующей загрузке
-			// или пользователь должен перезагрузить список чатов
-			toast.success('Вы вышли из команды');
-			navigate('/app/teams', { replace: true });
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось выйти из команды';
-			toast.error(message);
-		} finally {
-			setDeleting(false);
-		}
-	};
-
-	const handleOpenTeamChat = async () => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			toast.error('Некорректный идентификатор команды');
-			return;
-		}
-		if (isOpeningTeamChat) {
-			return;
-		}
-
-		setIsOpeningTeamChat(true);
-		try {
-			const chat = await getOrCreateTeamChat(numericTeamId);
-			navigate('/app/chats', { state: { openChatId: chat.chat_id, openTeamId: numericTeamId } });
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось открыть беседу команды';
-
-			if (message === 'Method Not Allowed') {
-				try {
-					const myChats = await getMyChats();
-					const existingTeamChat = myChats.chats.find((chat) => (
-						chat.team_id === numericTeamId && chat.type === 'team'
-					)) ?? myChats.chats.find((chat) => chat.team_id === numericTeamId) ?? null;
-
-					if (existingTeamChat) {
-						navigate('/app/chats', { state: { openChatId: existingTeamChat.chat_id, openTeamId: numericTeamId } });
-						return;
-					}
-
-					if (!loadedOnce) {
-						await fetchMembers();
-					}
-
-					const participantIds = Array.from(
-						new Set(members.map((entry) => entry.membership.user_id).filter((id) => Number.isFinite(id) && id > 0)),
-					);
-
-					if (participantIds.length === 0) {
-						toast.error('Не удалось определить участников команды');
-						return;
-					}
-
-					const created = await createChat({
-						team_id: numericTeamId,
-						participant_user_ids: participantIds,
-						name: null,
-					});
-					navigate('/app/chats', { state: { openChatId: created.chat_id, openTeamId: numericTeamId } });
-					return;
-				} catch (fallbackErr) {
-					const fallbackMessage = fallbackErr instanceof Error ? fallbackErr.message : 'Не удалось открыть беседу команды';
-					toast.error(fallbackMessage);
-					return;
-				}
-			}
-
-			toast.error(message);
-		} finally {
-			setIsOpeningTeamChat(false);
-		}
-	};
-
-	const handleCopyRoadmap = async (roadmapId: number): Promise<void> => {
-		try {
-			setIsCopyingRoadmap(true);
-			const copied = await copyRoadmap(roadmapId);
-			toast.success(`Роудмап успешно скопирован в ваш аккаунт #${copied.roadmap_id}`);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось скопировать роудмап';
-			toast.error(message);
-		} finally {
-			setIsCopyingRoadmap(false);
-		}
-	};
-
-	const handleDeleteTeamRoadmap = async (roadmapId: number): Promise<void> => {
-		if (!Number.isFinite(numericTeamId) || numericTeamId <= 0) {
-			return;
-		}
-
-		const roadmapToDelete = teamRoadmaps.find((item) => item.roadmap_id === roadmapId) ?? null;
-		if (!roadmapToDelete) {
-			return;
-		}
-
-		const confirmed = window.confirm('Удалить роудмап из команды? Это действие нельзя отменить.');
-		if (!confirmed) {
-			return;
-		}
-
-		setIsDeletingTeamRoadmap(true);
-		try {
-			await deleteTeamRoadmap(numericTeamId, roadmapToDelete.roadmap_id);
-
-			const nextRoadmaps = teamRoadmaps.filter((item) => item.roadmap_id !== roadmapToDelete.roadmap_id);
-			setTeamRoadmaps(nextRoadmaps);
-			setTeamTasksCache((prev) => {
-				const { [roadmapToDelete.roadmap_id]: _removed, ...rest } = prev;
-				return rest;
-			});
-
-			if (selectedTeamRoadmapId === roadmapToDelete.roadmap_id) {
-				setSelectedTeamRoadmapId(nextRoadmaps[0]?.roadmap_id ?? null);
-				if (nextRoadmaps[0]) {
-					await handleSelectTeamRoadmap(nextRoadmaps[0].roadmap_id);
-				}
-			}
-
-			toast.success('Роудмап удален из команды');
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось удалить командный роудмап';
-			toast.error(message);
-		} finally {
-			setIsDeletingTeamRoadmap(false);
-		}
-	};
+	const {
+		isOpeningTeamChat,
+		openTeamChat,
+	} = useTeamChat({
+		teamId: numericTeamId,
+		members,
+		loadedOnce,
+		refreshMembers,
+	});
 
 	return (
 		<section className="flex h-[calc(100dvh-96px)] min-h-[540px] flex-col">
 			<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5">
 				<button
 					type="button"
-					onClick={handleOpenTeamPanel}
+					onClick={() => void openTeamPanel()}
 					className="flex w-full items-center justify-between border-b border-white/10 bg-black/30 px-4 py-3 text-left backdrop-blur-sm transition-colors hover:bg-black/40"
 				>
 					<div className="flex items-start gap-3">
@@ -597,8 +136,8 @@ const TeamView: React.FC = () => {
 								</button>
 								<button
 									type="button"
-									onClick={() => void handleOpenTeamChat()}
-									disabled={isTeamChatDisabled}
+									onClick={() => void openTeamChat()}
+									disabled={isOpeningTeamChat || !Number.isFinite(numericTeamId) || numericTeamId <= 0}
 									className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
 								>
 									<MessageCircle className="h-4 w-4" />
@@ -607,7 +146,7 @@ const TeamView: React.FC = () => {
 								{isAdmin && (
 									<button
 										type="button"
-										onClick={() => void handleOpenShareModal()}
+										onClick={() => void openShareModal()}
 										className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
 									>
 										Поделиться роудмапом
@@ -633,39 +172,14 @@ const TeamView: React.FC = () => {
 							{!isLoadingTeamRoadmaps && teamRoadmaps.length > 0 && (
 								<>
 									<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-										{teamRoadmaps.map((roadmap) => {
-											const isSelected = roadmap.roadmap_id === selectedTeamRoadmapId;
-											return (
-												<div
-													key={roadmap.roadmap_id}
-													className={`w-full rounded-xl border bg-black/20 p-4 text-left transition-colors ${
-														isSelected ? 'border-purple-400/60' : 'border-white/10 hover:border-purple-500/30'
-													}`}
-												>
-													<button
-														type="button"
-														onClick={() => void handleSelectTeamRoadmap(roadmap.roadmap_id)}
-														className="block w-full text-left"
-													>
-														<div className="flex items-start justify-between gap-3">
-															<div>
-																<p className="text-xs uppercase tracking-wide text-purple-200/70">Список задач</p>
-																<h3 className="mt-2 text-sm font-semibold text-white">
-																	{roadmap.goal?.title ?? 'Роудмап'}
-																</h3>
-															</div>
-															<span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-purple-100/80">
-																{roadmap.tasks.length} задач
-															</span>
-														</div>
-
-														{roadmap.goal?.description && (
-															<p className="mt-2 line-clamp-3 text-xs text-purple-100/70">{roadmap.goal.description}</p>
-														)}
-													</button>
-												</div>
-										);
-										})}
+										{teamRoadmaps.map((roadmap) => (
+											<RoadmapCard
+												key={roadmap.roadmap_id}
+												roadmap={roadmap}
+												isSelected={roadmap.roadmap_id === selectedTeamRoadmapId}
+												onSelect={(roadmapId) => void selectTeamRoadmap(roadmapId)}
+											/>
+										))}
 									</div>
 
 									{selectedTeamRoadmap && (
@@ -679,81 +193,63 @@ const TeamView: React.FC = () => {
 													)}
 												</div>
 
-										<div className="flex gap-2">
-											<button
-												type="button"
-												onClick={() => void handleCopyRoadmap(selectedTeamRoadmap.roadmap_id)}
-												disabled={isCopyingRoadmap || isDeletingTeamRoadmap}
-												className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
-												title="Скопировать роудмап себе"
-											>
-												{isCopyingRoadmap ? 'Копирую...' : 'Скопировать'}
-											</button>
-											{isAdmin && (
-												<button
-													type="button"
-													onClick={() => void handleDeleteTeamRoadmap(selectedTeamRoadmap.roadmap_id)}
-													disabled={isDeletingTeamRoadmap || isCopyingRoadmap}
-													className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-100 transition-colors hover:bg-red-500/20 disabled:opacity-60"
-													title="Удалить роудмап из команды"
-												>
-													{isDeletingTeamRoadmap ? 'Удаление...' : 'Удалить'}
-												</button>
-											)}
-											<button
-												type="button"
-												onClick={() => setSelectedTeamRoadmapId(null)}
-												className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
-												aria-label="Закрыть роудмап"
-											>
-												<X className="h-4 w-4" />
-											</button>
-										</div>
+												<div className="flex gap-2">
+													<button
+														type="button"
+														onClick={() => void copyRoadmap(selectedTeamRoadmap.roadmap_id)}
+														disabled={isCopyingRoadmap || isDeletingTeamRoadmap}
+														className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/35 disabled:opacity-60"
+														title="Скопировать роудмап себе"
+													>
+														{isCopyingRoadmap ? 'Копирую...' : 'Скопировать'}
+													</button>
+													{isAdmin && (
+														<button
+															type="button"
+															onClick={() => void deleteTeamRoadmap(selectedTeamRoadmap.roadmap_id)}
+															disabled={isDeletingTeamRoadmap || isCopyingRoadmap}
+															className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-100 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+															title="Удалить роудмап из команды"
+														>
+															{isDeletingTeamRoadmap ? 'Удаление...' : 'Удалить'}
+														</button>
+													)}
+													<button
+														type="button"
+														onClick={() => clearSelectedTeamRoadmap()}
+														className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
+														aria-label="Закрыть роудмап"
+													>
+														<X className="h-4 w-4" />
+													</button>
+												</div>
+											</div>
+
 											{!isLoadingTeamRoadmapTasks && visibleTeamRoadmapTasks.length === 0 && (
 												<div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 text-sm text-purple-100/60">
 													В этом роудмапе пока нет задач.
 												</div>
 											)}
 
+											{isLoadingTeamRoadmapTasks && (
+												<div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+													<LoaderCircle className="mr-2 inline-block h-4 w-4 animate-spin" />
+													Загрузка задач роудмапа...
+												</div>
+											)}
+
 											<div className="space-y-3">
 												{visibleTeamRoadmapTasks.map((task) => (
-													<div
+													<TaskItem
 														key={task.task_id}
-														className="rounded-2xl border border-white/10 bg-black/20 p-4"
-													>
-														<div className="flex flex-wrap items-start justify-between gap-3">
-															<div className="flex items-start gap-3">
-																	<button
-																		type="button"
-																		onClick={() => void handleToggleTeamTaskComplete(task)}
-																		disabled={Boolean(teamTaskBusyIds[task.task_id])}
-																		className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-purple-100/80 transition hover:bg-white/10 disabled:opacity-60"
-																		aria-label={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
-																		title={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
-																	>
-																	{task.completed ? (
-																		<CheckCircle2 className="h-5 w-5 text-emerald-400" />
-																	) : (
-																		<Circle className="h-5 w-5 text-purple-300" />
-																	)}
-																	</button>
-
-																<div className="min-w-0">
-																	<p className="font-medium text-purple-50">
-																		{task.order_index + 1}. {task.title}
-																	</p>
-																	{task.description && (
-																		<p className="mt-1 text-sm leading-relaxed text-purple-100/70">{task.description}</p>
-																	)}
-																</div>
-															</div>
-														</div>
-													</div>
+														task={task}
+														busy={Boolean(teamTaskBusyIds[task.task_id])}
+														onToggleComplete={(currentTask) => void toggleTeamTaskComplete(currentTask)}
+													/>
 												))}
 											</div>
 										</div>
-									</div>
-								)}
+									)}
 								</>
 							)}
 						</div>
@@ -771,7 +267,7 @@ const TeamView: React.FC = () => {
 							</div>
 							<button
 								type="button"
-								onClick={handleCloseTeamPanel}
+								onClick={closeTeamPanel}
 								className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
 								aria-label="Закрыть панель"
 							>
@@ -805,7 +301,7 @@ const TeamView: React.FC = () => {
 										</button>
 										<button
 											type="button"
-											onClick={handleDeleteTeam}
+											onClick={() => void handleDeleteTeam()}
 											disabled={savingName || deleting}
 											className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 transition-colors hover:bg-red-500/20 disabled:opacity-60"
 										>
@@ -836,79 +332,27 @@ const TeamView: React.FC = () => {
 
 						{!loading && !error && members.length > 0 && (
 							<div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
-								{members.map(({ membership, profile }) => {
-									const avatarUrl = buildAvatarUrl(profile.avatar_url);
-									const hasFailedAvatar = failedAvatarUserIds.has(membership.user_id);
-									return (
-										<article
-											key={membership.id}
-											className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-4"
-										>
-											<div className="flex items-center gap-3">
-												{(avatarUrl && !hasFailedAvatar) ? (
-													<img
-														src={avatarUrl}
-														alt={`Аватар ${profile.username ?? `user-${membership.user_id}`}`}
-														onError={() => {
-															console.error('Ошибка загрузки аватара пользователя:', membership.user_id);
-															setFailedAvatarUserIds(prev => new Set([...prev, membership.user_id]));
-														}}
-														className="h-11 w-11 rounded-full border border-purple-400/30 object-cover"
-													/>
-												) : (
-													<div className="flex h-11 w-11 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-xs font-semibold text-white">
-														{getInitials(profile)}
-													</div>
-												)}
-
-												<div>
-													<p className="text-sm font-semibold text-white">{getFullName(profile)}</p>
-													<p className="text-xs text-purple-100/70">@{profile.username ?? `user-${membership.user_id}`}</p>
-												</div>
-											</div>
-
-											{isAdmin && membership.user_id !== myUserId ? (
-												<div className="flex items-center gap-2">
-													{membership.team_role_id === 2 && (
-														<button
-															type="button"
-															onClick={() => void handleUpdateMemberRole(membership.user_id, 1)}
-															disabled={updatingRoleUserId === membership.user_id}
-															className="inline-flex items-center gap-1 rounded-lg border border-purple-400/40 bg-purple-500/20 px-3 py-1 text-xs font-medium text-purple-100 transition hover:bg-purple-500/30 disabled:opacity-60"
-															title="Назначить администратором"
-														>
-															<Shield className="h-3 w-3" />
-															{updatingRoleUserId === membership.user_id ? '...' : 'Администратор'}
-														</button>
-													)}
-													{membership.team_role_id === 1 && (
-														<button
-															type="button"
-															onClick={() => void handleUpdateMemberRole(membership.user_id, 2)}
-															disabled={updatingRoleUserId === membership.user_id}
-															className="inline-flex items-center gap-1 rounded-lg border border-yellow-500/40 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-100 transition hover:bg-yellow-500/30 disabled:opacity-60"
-															title="Понизить до участника"
-														>
-															<Users className="h-3 w-3" />
-															{updatingRoleUserId === membership.user_id ? '...' : 'Участник'}
-														</button>
-													)}
-												</div>
-											) : (
-												<span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
-													{formatRole(membership.team_role_id)}
-												</span>
-											)}
-										</article>
-									);
-								})}
+								{members.map((member) => (
+									<TeamMemberItem
+										key={member.membership.id}
+										member={member}
+										isAdmin={Boolean(isAdmin)}
+										myUserId={myUserId}
+										updatingRoleUserId={updatingRoleUserId}
+										failedAvatarUserIds={failedAvatarUserIds}
+										onAvatarError={markAvatarAsFailed}
+										onUpdateRole={(userId, roleId) => {
+											void updateMemberRole(userId, roleId);
+										}}
+									/>
+								))}
 							</div>
 						)}
 
 						{!isAdmin && loadedOnce && (
 							<button
 								type="button"
-								onClick={handleLeaveTeam}
+								onClick={() => void handleLeaveTeam()}
 								disabled={deleting}
 								className="mt-6 w-full rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 transition-colors hover:bg-red-500/20 disabled:opacity-60"
 							>
@@ -932,7 +376,7 @@ const TeamView: React.FC = () => {
 							</div>
 							<button
 								type="button"
-								onClick={handleCloseShareModal}
+								onClick={closeShareModal}
 								disabled={isSharingRoadmap}
 								className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
 								aria-label="Закрыть окно шаринга"
@@ -985,7 +429,7 @@ const TeamView: React.FC = () => {
 						<div className="mt-5 flex justify-end gap-2">
 							<button
 								type="button"
-								onClick={handleCloseShareModal}
+								onClick={closeShareModal}
 								disabled={isSharingRoadmap}
 								className="rounded-lg border border-white/10 bg-black/20 px-4 py-2 text-sm text-purple-100 transition-colors hover:bg-black/35 disabled:opacity-60"
 							>
@@ -993,7 +437,7 @@ const TeamView: React.FC = () => {
 							</button>
 							<button
 								type="button"
-								onClick={() => void handleShareRoadmap()}
+								onClick={() => void shareRoadmap()}
 								disabled={isSharingRoadmap || !selectedRoadmapId}
 								className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
 							>
