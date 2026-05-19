@@ -24,12 +24,12 @@ function getInitials(profile: UserProfile | null): string {
 
   const firstNameInitial = profile.name?.[0] || '';
   const surnameInitial = profile.surname?.[0] || '';
-  return `${firstNameInitial}${surnameInitial}`.toUpperCase() || 'AM';
+  return `${firstNameInitial}${surnameInitial}`.toUpperCase() || 'ИФ';
 }
 
 function getFullName(profile: UserProfile | null): string {
   if (!profile) {
-    return 'Alexander Meshkov';
+    return 'Имя не указано';
   }
 
   const parts = [profile.surname, profile.name, profile.patronymic].filter(Boolean);
