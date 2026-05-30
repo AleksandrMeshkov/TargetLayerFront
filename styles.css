@@ -11,18 +11,215 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 260 50% 5%;
-    --foreground: 260 10% 98%;
-    --primary: 266 80% 60%;
-    --primary-foreground: 0 0% 100%;
-    --border: 260 30% 20%;
+  :root,
+  :root[data-theme='dark'] {
+    --page-bg: 10 5 26;
+    --page-fg: 248 250 252;
+    --surface: 20 12 43;
+    --surface-strong: 11 7 24;
+    --surface-soft: 32 20 58;
+    --border-color: 74 35 138;
+    --muted-fg: 196 181 253;
+    --accent: 168 85 247;
+    --accent-strong: 147 51 234;
+    --accent-foreground: 255 255 255;
     --radius: 1rem;
+  }
+
+  :root[data-theme='light'] {
+    --page-bg: 246 247 251;
+    --page-fg: 15 23 42;
+    --surface: 255 255 255;
+    --surface-strong: 241 245 249;
+    --surface-soft: 248 250 252;
+    --border-color: 203 213 225;
+    --muted-fg: 71 85 105;
+    --accent: 109 40 217;
+    --accent-strong: 91 33 182;
+    --accent-foreground: 255 255 255;
   }
 }
 
+@layer components {
+  .theme-shell {
+    min-height: 100vh;
+    background-color: rgb(var(--page-bg));
+    color: rgb(var(--page-fg));
+  }
+
+  .theme-panel {
+    border: 1px solid rgb(var(--border-color));
+    background-color: rgb(var(--surface) / 0.74);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 24px 80px rgb(0 0 0 / 0.16);
+  }
+
+  .theme-panel-strong {
+    border: 1px solid rgb(var(--border-color));
+    background-color: rgb(var(--surface-strong) / 0.92);
+    backdrop-filter: blur(24px);
+  }
+
+  .theme-card {
+    border: 1px solid rgb(var(--border-color));
+    background-color: rgb(var(--surface));
+    border-radius: 1rem;
+  }
+
+  .theme-heading {
+    color: rgb(var(--page-fg));
+  }
+
+  .theme-muted {
+    color: rgb(var(--muted-fg));
+  }
+
+  .theme-accent {
+    color: rgb(var(--accent));
+  }
+
+  .theme-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(var(--muted-fg));
+  }
+
+  .theme-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(var(--border-color));
+    background-color: rgb(var(--surface-soft));
+    color: rgb(var(--page-fg));
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  .theme-input::placeholder {
+    color: rgb(var(--muted-fg) / 0.5);
+  }
+
+  .theme-input:focus {
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.16);
+  }
+
+  .theme-button-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    background-color: rgb(var(--accent));
+    color: rgb(var(--accent-foreground));
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .theme-button-primary:hover {
+    background-color: rgb(var(--accent-strong));
+  }
+
+  .theme-button-primary:disabled,
+  .theme-button-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .theme-button-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(var(--border-color));
+    background-color: rgb(var(--surface-soft));
+    color: rgb(var(--page-fg));
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .theme-button-secondary:hover {
+    background-color: rgb(var(--surface));
+  }
+
+  .theme-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(var(--muted-fg));
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .theme-nav-link:hover {
+    background-color: rgb(var(--surface-soft));
+    color: rgb(var(--page-fg));
+  }
+
+  .theme-nav-link-active {
+    border-color: rgb(var(--accent) / 0.28);
+    background-color: rgb(var(--accent) / 0.14);
+    color: rgb(var(--page-fg));
+  }
+
+  /* Light-theme overrides for stronger contrast on auth pages and inputs */
+  :root[data-theme='light'] .theme-panel {
+    background-color: rgb(var(--surface) / 0.98);
+    backdrop-filter: none;
+    box-shadow: 0 12px 48px rgb(11 15 30 / 0.06);
+  }
+
+  :root[data-theme='light'] .theme-panel-strong {
+    background-color: rgb(var(--surface-strong));
+    backdrop-filter: none;
+    box-shadow: 0 12px 48px rgb(11 15 30 / 0.06);
+  }
+
+  :root[data-theme='light'] .theme-input {
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--border-color));
+    color: rgb(var(--page-fg));
+    box-shadow: 0 6px 18px rgb(15 23 42 / 0.04);
+  }
+
+  :root[data-theme='light'] .theme-input::placeholder {
+    color: rgb(var(--muted-fg) / 0.6);
+  }
+
+  :root[data-theme='light'] .theme-label {
+    color: rgb(var(--muted-fg));
+  }
+
+  :root[data-theme='light'] .theme-muted {
+    /* stronger muted color in light theme for better readability */
+    color: rgb(var(--page-fg) / 0.75);
+  }
+}
+
+/* Fixed hero styles that must not change with theme */
+.fixed-hero-title {
+  color: #ffffff !important;
+  -webkit-text-stroke: 0px transparent;
+}
+
+.fixed-hero-subtitle {
+  /* Tailwind purple-200 ~ #E9D5FF with 60% opacity */
+  color: rgba(233,213,255,0.6) !important;
+}
+
 body {
-  @apply bg-[#0a051a] text-white antialiased;
+  background-color: rgb(var(--page-bg));
+  color: rgb(var(--page-fg));
   font-family: 'MT Sans Full', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-weight: 500;
 }
@@ -35,6 +232,7 @@ body { overflow-wrap: anywhere; -webkit-font-smoothing:antialiased; }
 
 html {
   font-size: 18px;
+  background-color: rgb(var(--page-bg));
 }
 
 ::-webkit-scrollbar {
@@ -42,14 +240,14 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a051a;
+  background: rgb(var(--page-bg));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2e1065;
+  background: rgb(var(--accent) / 0.7);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4c1d95;
+  background: rgb(var(--accent));
 }

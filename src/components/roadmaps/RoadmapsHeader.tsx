@@ -18,13 +18,13 @@ export function RoadmapsHeader({
   isManageDisabled,
 }: RoadmapsHeaderProps) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+    <div className="theme-panel rounded-3xl p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Map className="h-8 w-8 text-purple-400" />
+          <Map className="theme-accent h-8 w-8" />
           <div>
-            <h1 className="text-3xl font-bold">Роудмапы</h1>
-            <p className="mt-2 max-w-2xl text-sm text-purple-100/70">
+            <h1 className="theme-heading text-3xl font-bold">Роудмапы</h1>
+            <p className="theme-muted mt-2 max-w-2xl text-sm">
               Выберите роудмап слева, чтобы посмотреть все его задачи.
             </p>
           </div>
@@ -34,7 +34,7 @@ export function RoadmapsHeader({
           <button
             type="button"
             onClick={onOpenCreateRoadmap}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-2 text-sm text-purple-50 transition hover:bg-purple-500/30"
+            className="theme-button-primary"
             disabled={isCreateDisabled}
           >
             <Plus className="h-4 w-4" />
@@ -45,7 +45,7 @@ export function RoadmapsHeader({
             <button
               type="button"
               onClick={onOpenManageRoadmap}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-purple-100 transition hover:bg-white/10"
+              className="theme-button-secondary"
               disabled={isManageDisabled}
             >
               <Pencil className="h-4 w-4" />

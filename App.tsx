@@ -22,6 +22,7 @@ import Profile from './src/pages/app/Profile.tsx';
 import Search from './src/pages/app/Search.tsx';
 import ChangePassword from './src/pages/app/ChangePassword.tsx';
 import { isAuthenticatedSession } from './src/api/auth/session.ts';
+import { ThemeModeProvider, useThemeMode } from './src/hooks/themeHooks/useThemeMode';
 
 function isAuthenticated(): boolean {
   return isAuthenticatedSession();
@@ -41,11 +42,13 @@ const PublicOnlyRoute: React.FC<{ children: React.ReactElement }> = ({ children 
   return children;
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { themeMode } = useThemeMode();
+
   return (
-    <Theme appearance="dark" radius="large" scaling="100%">
+    <Theme appearance={themeMode} radius="large" scaling="100%">
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <main className="min-h-screen font-sans selection:bg-purple-500/30">
+        <main className="theme-shell font-sans selection:bg-purple-500/30">
           <Routes>
             <Route
               path="/"
@@ -121,12 +124,18 @@ const App: React.FC = () => {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="dark"
+            theme={themeMode}
           />
         </main>
       </Router>
     </Theme>
   );
-}
+};
+
+const App: React.FC = () => (
+  <ThemeModeProvider>
+    <AppContent />
+  </ThemeModeProvider>
+);
 
 export default App;

@@ -33,9 +33,9 @@ export default function ForgotPassword() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Email</label>
+          <label className="theme-label">Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('email', {
                 required: 'Введите email',
@@ -46,7 +46,7 @@ export default function ForgotPassword() {
               })}
               type="email"
               placeholder="name@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.email.message)}</p>}
@@ -55,7 +55,7 @@ export default function ForgotPassword() {
         <button
           disabled={isSubmitting}
           type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 group transition-all active:scale-[0.98]"
+          className="theme-button-primary w-full flex items-center justify-center gap-2"
         >
           {isSubmitting ? 'Отправка...' : 'Отправить ссылку'}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

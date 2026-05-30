@@ -49,20 +49,20 @@ export function CreateRoadmapModal({
       maxWidthClassName="max-w-3xl"
     >
       <div className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <p className="text-sm font-medium text-purple-50">Параметры роудмапа</p>
+        <div className="rounded-2xl p-4 theme-panel">
+          <p className="text-sm font-medium theme-heading">Параметры роудмапа</p>
           <div className="mt-3 grid gap-3">
             <input
               value={title}
               onChange={(event) => onChangeTitle(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              className="theme-input"
               placeholder="Название роудмапа"
               disabled={isSubmitting}
             />
             <textarea
               value={description}
               onChange={(event) => onChangeDescription(event.target.value)}
-              className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              className="theme-input"
               placeholder="Описание роудмапа (необязательно)"
               rows={3}
               disabled={isSubmitting}
@@ -70,7 +70,7 @@ export function CreateRoadmapModal({
             <input
               value={teamId}
               onChange={(event) => onChangeTeamId(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              className="theme-input"
               placeholder="ID команды, если роудмап нужно сразу привязать к команде"
               inputMode="numeric"
               disabled={isSubmitting}
@@ -78,16 +78,16 @@ export function CreateRoadmapModal({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+        <div className="rounded-2xl p-4 theme-panel">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-purple-50">Стартовые задачи</p>
-              <p className="mt-1 text-xs text-purple-100/60">Можно оставить пустыми и создать роудмап без задач.</p>
+              <p className="text-sm font-medium theme-heading">Стартовые задачи</p>
+              <p className="mt-1 text-xs theme-muted">Можно оставить пустыми и создать роудмап без задач.</p>
             </div>
             <button
               type="button"
               onClick={onAddTask}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-purple-100 transition hover:bg-white/10"
+              className="theme-button-secondary"
               disabled={isSubmitting}
             >
               <Plus className="h-4 w-4" />
@@ -97,13 +97,13 @@ export function CreateRoadmapModal({
 
           <div className="mt-4 space-y-3">
             {tasks.map((task, index) => (
-              <div key={index} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div key={index} className="rounded-2xl p-3 theme-card">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-wide text-purple-200/60">Задача #{index + 1}</p>
+                  <p className="text-xs uppercase tracking-wide theme-muted">Задача #{index + 1}</p>
                   <button
                     type="button"
                     onClick={() => onRemoveTask(index)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-1.5 text-xs text-purple-100/70 transition hover:bg-white/10"
+                    className="theme-button-secondary"
                     disabled={isSubmitting}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -115,14 +115,14 @@ export function CreateRoadmapModal({
                   <input
                     value={task.title}
                     onChange={(event) => onChangeTask(index, 'title', event.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    className="theme-input"
                     placeholder="Название задачи"
                     disabled={isSubmitting}
                   />
                   <textarea
                     value={task.description}
                     onChange={(event) => onChangeTask(index, 'description', event.target.value)}
-                    className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    className="theme-input"
                     placeholder="Описание задачи (необязательно)"
                     rows={2}
                     disabled={isSubmitting}
@@ -137,7 +137,7 @@ export function CreateRoadmapModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-purple-100 transition hover:bg-white/10"
+            className="theme-button-secondary"
             disabled={isSubmitting}
           >
             Отмена
@@ -145,7 +145,7 @@ export function CreateRoadmapModal({
           <button
             type="button"
             onClick={onSubmit}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-3 text-sm text-purple-50 transition hover:bg-purple-500/30"
+            className="theme-button-primary"
             disabled={isSubmitting}
           >
             {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}

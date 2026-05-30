@@ -28,18 +28,18 @@ const Chat: React.FC = () => {
 
   return (
     <section className="relative">
-      <div className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+      <div className="theme-panel mb-5 rounded-3xl p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <MessageCircle className="h-7 w-7 text-purple-300" />
-            <h1 className="text-2xl font-bold sm:text-3xl">AI чат</h1>
+            <MessageCircle className="theme-accent h-7 w-7" />
+            <h1 className="theme-heading text-2xl font-bold sm:text-3xl">AI чат</h1>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setMobileHistoryOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-purple-100 transition hover:bg-white/10 lg:hidden"
+              className="theme-button-secondary lg:hidden"
             >
               <Menu className="h-4 w-4" />
               История
@@ -47,7 +47,7 @@ const Chat: React.FC = () => {
             <button
               type="button"
               onClick={() => void createConversation()}
-              className="inline-flex items-center gap-2 rounded-xl border border-purple-400/40 bg-purple-500/20 px-3 py-2 text-sm text-purple-50 transition hover:bg-purple-500/30"
+              className="theme-button-primary"
               disabled={isCreatingConversation}
             >
               <Plus className="h-4 w-4" />
@@ -56,14 +56,14 @@ const Chat: React.FC = () => {
           </div>
         </div>
 
-        <p className="mt-3 max-w-3xl text-sm text-purple-100/70">Здесь можно обсуждать цели с AI и получать сгенерированный roadmap.</p>
+        <p className="theme-muted mt-3 max-w-3xl text-sm">Здесь можно обсуждать цели с AI и получать сгенерированный roadmap.</p>
       </div>
 
       <div className="flex min-h-[65vh] gap-4">
-        <aside className="hidden w-80 shrink-0 rounded-2xl border border-white/10 bg-black/30 p-4 lg:block">
+        <aside className="theme-panel hidden w-80 shrink-0 rounded-2xl p-4 lg:block">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs uppercase tracking-wide text-purple-200/70">История чатов</p>
-            <span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">{conversations.length}</span>
+            <p className="text-xs uppercase tracking-wide text-[rgb(var(--muted-fg))]">История чатов</p>
+            <span className="rounded-lg border border-[rgb(var(--border-color))/0.25] px-2 py-1 text-xs text-[rgb(var(--muted-fg))]">{conversations.length}</span>
           </div>
 
           <ConversationList
@@ -76,13 +76,13 @@ const Chat: React.FC = () => {
           />
         </aside>
 
-        <div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4">
-          <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="theme-panel flex-1 rounded-2xl p-3 sm:p-4">
+          <div className="mb-4 flex items-center justify-between border-b border-[rgb(var(--border-color))/0.25] pb-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-purple-200/70">Активный чат</p>
-              <p className="text-sm font-medium text-purple-50">{activeConversation ? `#${activeConversation.conversation_id}` : 'Чат не выбран'}</p>
+              <p className="text-xs uppercase tracking-wide text-[rgb(var(--muted-fg))]">Активный чат</p>
+              <p className="text-sm font-medium text-[rgb(var(--page-fg))]">{activeConversation ? `#${activeConversation.conversation_id}` : 'Чат не выбран'}</p>
             </div>
-            {isSending && <p className="text-xs text-purple-200/80">АИ отвечает...</p>}
+            {isSending && <p className="text-xs text-[rgb(var(--muted-fg))]">АИ отвечает...</p>}
           </div>
 
           <MessageList messages={messages} />
@@ -93,10 +93,10 @@ const Chat: React.FC = () => {
 
       {mobileHistoryOpen && (
         <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden">
-          <div className="h-full w-[86%] max-w-sm border-r border-white/10 bg-[#0f0a1f] p-4">
+          <div className="theme-panel-strong h-full w-[86%] max-w-sm border-r p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-purple-50">История чатов</p>
-              <button type="button" onClick={() => setMobileHistoryOpen(false)} className="rounded-lg border border-white/10 p-2 text-purple-100/80">
+              <p className="text-sm font-semibold text-[rgb(var(--page-fg))]">История чатов</p>
+              <button type="button" onClick={() => setMobileHistoryOpen(false)} className="theme-button-secondary p-2">
                 <X className="h-4 w-4" />
               </button>
             </div>

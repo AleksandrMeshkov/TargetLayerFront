@@ -68,20 +68,20 @@ export default function ResetPassword() {
       subtitle="Введите новый пароль и подтвердите его"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Новый пароль</label>
+          <div className="space-y-2">
+          <label className="theme-label">Новый пароль</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('new_password', { required: 'Введите новый пароль' })}
               type={showNew ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-12 py-3"
             />
             <button
               type="button"
               onClick={() => setShowNew((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 theme-muted hover:theme-accent transition-colors"
               aria-label={showNew ? 'Скрыть пароль' : 'Показать пароль'}
             >
               {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -90,20 +90,20 @@ export default function ResetPassword() {
           {errors.new_password && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.new_password.message)}</p>}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Подтверждение пароля</label>
+          <div className="space-y-2">
+          <label className="theme-label">Подтверждение пароля</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('confirm_password', { required: 'Подтвердите новый пароль' })}
               type={showConfirm ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-12 py-3"
             />
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 theme-muted hover:theme-accent transition-colors"
               aria-label={showConfirm ? 'Скрыть пароль' : 'Показать пароль'}
             >
               {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -115,7 +115,7 @@ export default function ResetPassword() {
         <button
           disabled={isSubmitting}
           type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 group transition-all active:scale-[0.98]"
+          className="theme-button-primary w-full flex items-center justify-center gap-2"
         >
           {isSubmitting ? 'Сохранение' : 'Сохранить новый пароль'}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

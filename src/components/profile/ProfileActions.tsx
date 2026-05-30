@@ -1,5 +1,6 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
+import { ProfileThemeToggle } from './ProfileThemeToggle';
 
 type ProfileActionsProps = {
   onChangePassword: () => void;
@@ -7,15 +8,16 @@ type ProfileActionsProps = {
 
 export function ProfileActions({ onChangePassword }: ProfileActionsProps) {
   return (
-    <nav className="mt-10 space-y-4">
+    <nav className="mt-10 grid gap-4 sm:grid-cols-2">
       <button
         type="button"
         onClick={onChangePassword}
-        className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-5 py-4 text-base text-purple-200 transition-colors hover:bg-white/10"
+        className="theme-button-secondary w-full justify-start px-5 py-4 text-base"
       >
-        <KeyRound className="h-5 w-5 text-purple-300" />
+        <KeyRound className="h-5 w-5" />
         Сменить пароль
       </button>
+      <ProfileThemeToggle />
     </nav>
   );
 }

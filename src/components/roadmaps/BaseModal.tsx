@@ -43,21 +43,21 @@ export function BaseModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
       <button
         type="button"
-        className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-[rgb(var(--page-bg))/0.6] backdrop-blur-sm"
         onClick={onClose}
         aria-label={closeLabel}
       />
 
-      <div className={`relative w-full ${maxWidthClassName} rounded-3xl border border-white/10 bg-[#080512] p-5 shadow-none`}>
+      <div className={`relative w-full ${maxWidthClassName} rounded-3xl p-5 shadow-none theme-panel-strong`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            {subtitle ? <p className="text-xs uppercase tracking-wide text-purple-200/70">{subtitle}</p> : null}
-            <h3 className="mt-2 text-xl font-bold text-purple-50">{title}</h3>
+            {subtitle ? <p className="text-xs uppercase tracking-wide theme-muted">{subtitle}</p> : null}
+            <h3 className="mt-2 text-xl font-bold theme-heading">{title}</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-black/30 p-2 text-purple-100 transition hover:bg-white/10"
+            className="inline-flex items-center justify-center rounded-xl p-2 theme-button-secondary"
             aria-label={closeLabel}
           >
             <X className="h-5 w-5" />

@@ -55,65 +55,65 @@ export default function Register() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Никнейм</label>
+          <label className="theme-label">Никнейм</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('username', { required: 'Введите никнейм' })}
               type="text"
               placeholder="username123"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.username && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.username.message)}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Имя</label>
+          <label className="theme-label">Имя</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('name', { required: 'Введите имя' })}
               type="text"
               placeholder="Александр"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.name && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.name.message)}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Фамилия</label>
+          <label className="theme-label">Фамилия</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('surname', { required: 'Введите фамилию' })}
               type="text"
               placeholder="Иванов"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.surname && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.surname.message)}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Отчество <span className="text-purple-300/50">(опционально)</span></label>
+          <label className="theme-label">Отчество <span className="theme-muted">(опционально)</span></label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('patronymic')}
               type="text"
               placeholder="Сергеевич"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.patronymic && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.patronymic.message)}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Email</label>
+          <label className="theme-label">Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('email', {
                 required: 'Введите email',
@@ -124,26 +124,26 @@ export default function Register() {
               })}
               type="email"
               placeholder="name@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-4 py-3"
             />
           </div>
           {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{String(errors.email.message)}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Пароль</label>
+          <label className="theme-label">Пароль</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('password', { required: 'Введите пароль' })}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-12 py-3"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 theme-muted hover:theme-accent transition-colors"
               aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -153,19 +153,19 @@ export default function Register() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-purple-200/70 ml-1">Подтвердите пароль</label>
+          <label className="theme-label">Подтвердите пароль</label>
           <div className="relative">
-            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400/50 w-5 h-5" />
+            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
               {...register('confirmPassword', { required: 'Подтвердите пароль' })}
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="theme-input w-full pl-11 pr-12 py-2.5"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword((value) => !value)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/70 hover:text-purple-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 theme-muted hover:theme-accent transition-colors"
               aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
             >
               {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -178,16 +178,16 @@ export default function Register() {
           <button
             disabled={isSubmitting}
             type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 group transition-all active:scale-[0.98]"
+            className="theme-button-primary w-full flex items-center justify-center gap-2"
           >
             {isSubmitting ? 'Создание...' : 'Создать аккаунт'}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
 
-        <p className="text-center text-sm text-purple-200/60 mt-6">
+        <p className="text-center text-sm theme-muted mt-6">
           Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-purple-400 font-medium hover:underline">Войти</Link>
+          <Link to="/login" className="theme-accent font-medium hover:underline">Войти</Link>
         </p>
       </form>
     </AuthLayout>

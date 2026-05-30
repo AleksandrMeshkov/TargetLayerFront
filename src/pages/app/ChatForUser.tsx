@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
 import { Edit2, LogOut, MessageCircle, SendHorizontal, Trash2, Users, X } from 'lucide-react';
+import { API_BASE_URL } from '../../api/apiBase/apiBase';
 import { toast } from 'react-toastify';
 import type { AppLayoutOutletContext } from '../../components/AppLayout';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
@@ -283,37 +284,37 @@ const ChatForUser: React.FC = () => {
 
 	return (
 		<section className="relative">
-			<div className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+			<div className="theme-panel mb-5 rounded-3xl p-5 sm:p-6">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div className="flex items-center gap-3">
-						<MessageCircle className="h-7 w-7 text-purple-300" />
-						<h1 className="text-2xl font-bold sm:text-3xl">Чаты</h1>
+						<MessageCircle className="theme-accent h-7 w-7" />
+						<h1 className="theme-heading text-2xl font-bold sm:text-3xl">Чаты</h1>
 					</div>
 				</div>
 
-				<p className="mt-3 max-w-3xl text-sm text-purple-100/70">
+				<p className="theme-muted mt-3 max-w-3xl text-sm">
 					Ваши сообщения
 				</p>
 			</div>
 
 			<div className="flex min-h-[65vh] flex-col gap-4 lg:flex-row">
-				<aside className="w-full shrink-0 rounded-2xl border border-white/10 bg-black/30 p-4 lg:w-80">
+				<aside className="theme-panel w-full shrink-0 rounded-2xl p-4 lg:w-80">
 					<div className="mb-3 flex items-center justify-between">
-						<p className="text-xs uppercase tracking-wide text-purple-200/70">Мои чаты</p>
-						<span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">
+						<p className="text-xs uppercase tracking-wide text-[rgb(var(--muted-fg))]">Мои чаты</p>
+						<span className="rounded-lg border border-[rgb(var(--border-color))] px-2 py-1 text-xs text-[rgb(var(--muted-fg))]">
 							{chats.length}
 						</span>
 					</div>
 
 					<div className="max-h-[58vh] space-y-2 overflow-y-auto pr-1">
 						{isChatsLoading && (
-							<p className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-purple-100/70">
+							<p className="theme-panel rounded-xl p-3 text-xs text-[rgb(var(--muted-fg))]">
 								Загружаю чаты...
 							</p>
 						)}
 
 						{!isChatsLoading && chats.length === 0 && (
-							<p className="rounded-xl border border-dashed border-white/15 p-3 text-xs text-purple-100/60">
+							<p className="rounded-xl border border-dashed border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.4] p-3 text-xs text-[rgb(var(--muted-fg))]">
 								Пока нет чатов. Откройте чат команды или дождитесь добавления в групповой чат.
 							</p>
 						)}
@@ -327,14 +328,14 @@ const ChatForUser: React.FC = () => {
 									onClick={() => void selectChat(chat.chat_id)}
 									className={`w-full rounded-xl border px-3 py-3 text-left transition ${
 										isActive
-											? 'border-purple-400/60 bg-purple-500/20'
-											: 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+											? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.12)]'
+											: 'border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] hover:border-[rgb(var(--accent))] hover:bg-[rgb(var(--surface))/0.85]'
 									}`}
 								>
-									<p className="text-sm font-medium text-purple-50">
+									<p className="text-sm font-medium text-[rgb(var(--page-fg))]">
 										{chat.name?.trim() ?? ''}
 									</p>
-									<p className="mt-1 text-[11px] text-purple-100/50">
+									<p className="mt-1 text-[11px] text-[rgb(var(--muted-fg))]">
 										Создан: {formatDateTime(chat.created_at)}
 									</p>
 								</button>
@@ -343,23 +344,23 @@ const ChatForUser: React.FC = () => {
 					</div>
 				</aside>
 
-				<div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4">
-					<div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+				<div className="theme-panel flex-1 rounded-2xl p-3 sm:p-4">
+					<div className="mb-4 flex items-center justify-between border-b border-[rgb(var(--border-color))] pb-3">
 						<div>
-							<p className="text-sm font-medium text-purple-50">
+							<p className="text-sm font-medium text-[rgb(var(--page-fg))]">
 								{activeChat?.name?.trim() ?? ''}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
-							{isSending && <p className="text-xs text-purple-200/80">Отправка</p>}
+							{isSending && <p className="text-xs text-[rgb(var(--muted-fg))]">Отправка</p>}
 							<button
 								type="button"
 								onClick={() => void handleToggleParticipants()}
 								disabled={activeChatId == null}
 								className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:opacity-60 ${
 									isParticipantsOpen
-										? 'border-purple-400/50 bg-purple-500/20 text-purple-50 hover:bg-purple-500/30'
-										: 'border-white/10 bg-white/5 text-purple-50 hover:border-white/30 hover:bg-white/10'
+										? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.12)] text-[rgb(var(--page-fg))] hover:bg-[rgb(var(--accent)/0.16)]'
+										: 'border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] text-[rgb(var(--page-fg))] hover:border-[rgb(var(--accent))] hover:bg-[rgb(var(--surface))/0.85]'
 								}`}
 								aria-label="Открыть участников чата"
 							>
@@ -370,7 +371,7 @@ const ChatForUser: React.FC = () => {
 								type="button"
 								onClick={() => void openChatNameEditor()}
 								disabled={activeChatId == null}
-								className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-purple-50 transition hover:border-white/30 hover:bg-white/10 disabled:opacity-60"
+								className="inline-flex items-center gap-2 rounded-lg border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-3 py-2 text-xs font-semibold text-[rgb(var(--page-fg))] transition hover:border-[rgb(var(--accent))] hover:bg-[rgb(var(--surface))/0.85] disabled:opacity-60"
 								aria-label="Изменить название чата"
 							>
 								<Edit2 className="h-4 w-4" />
@@ -380,7 +381,7 @@ const ChatForUser: React.FC = () => {
 								type="button"
 								onClick={() => void handleLeaveChat()}
 								disabled={activeChatId == null || isLeavingChat}
-								className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-60"
+								className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-500/20 disabled:opacity-60"
 								aria-label="Выйти из чата"
 							>
 								<LogOut className="h-4 w-4" />
@@ -390,14 +391,14 @@ const ChatForUser: React.FC = () => {
 					</div>
 
 					{activeChat && isChatNameEditorOpen && (
-						<form onSubmit={handleRenameChat} className="mb-4 rounded-xl border border-white/10 bg-black/20 p-3">
+						<form onSubmit={handleRenameChat} className="theme-panel mb-4 rounded-xl p-3">
 							<div className="mb-3 flex items-center justify-between gap-3">
-								<p className="text-xs uppercase tracking-wide text-purple-200/70">Название чата</p>
+								<p className="text-xs uppercase tracking-wide text-[rgb(var(--muted-fg))]">Название чата</p>
 								<button
 									type="button"
 									onClick={closeChatNameEditor}
 									disabled={isRenamingChat}
-									className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-purple-50 transition hover:border-white/30 hover:bg-white/10 disabled:opacity-60"
+									className="inline-flex items-center gap-2 rounded-lg border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--page-fg))] transition hover:border-[rgb(var(--accent))] hover:bg-[rgb(var(--surface))/0.85] disabled:opacity-60"
 								>
 									<X className="h-4 w-4" />
 									Закрыть
@@ -412,13 +413,13 @@ const ChatForUser: React.FC = () => {
 										onChange={(event) => setChatNameDraft(event.target.value)}
 										placeholder={activeChat?.name?.trim() ?? ''}
 										disabled={isRenamingChat}
-										className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-purple-100/40 focus:border-purple-400/50 disabled:opacity-60"
+										className="theme-input w-full rounded-lg px-3 py-2 text-sm"
 									/>
 								</div>
 								<button
 									type="submit"
 									disabled={isRenamingChat || !chatNameDraft.trim()}
-									className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-400/40 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-50 transition hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+									className="theme-button-primary disabled:cursor-not-allowed disabled:opacity-40"
 								>
 									<Edit2 className="h-4 w-4" />
 									{isRenamingChat ? 'Сохранение...' : 'Сохранить'}
@@ -427,21 +428,21 @@ const ChatForUser: React.FC = () => {
 						</form>
 					)}
 
-					<div className="mb-4 max-h-[50vh] space-y-3 overflow-y-auto rounded-xl bg-black/30 p-3 sm:p-4">
+					<div className="theme-panel mb-4 max-h-[50vh] space-y-3 overflow-y-auto rounded-xl p-3 sm:p-4">
 						{isMessagesLoading && activeChatId != null && (
-							<div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/70">
+							<div className="rounded-xl border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-4 py-3 text-sm text-[rgb(var(--muted-fg))]">
 								Загружаю сообщения...
 							</div>
 						)}
 
 						{!isMessagesLoading && activeChatId == null && (
-							<div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center text-sm text-purple-100/60">
+							<div className="rounded-xl border border-dashed border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.35] px-4 py-8 text-center text-sm text-[rgb(var(--muted-fg))]">
 								Выберите чат слева или создайте новый.
 							</div>
 						)}
 
 						{!isMessagesLoading && activeChatId != null && messages.length === 0 && (
-							<div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center text-sm text-purple-100/60">
+							<div className="rounded-xl border border-dashed border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.35] px-4 py-8 text-center text-sm text-[rgb(var(--muted-fg))]">
 								Сообщений пока нет — отправьте первое.
 							</div>
 						)}
@@ -457,8 +458,8 @@ const ChatForUser: React.FC = () => {
 									key={message.message_id}
 									className={`group relative rounded-2xl border px-4 py-3 ${
 										isMine
-											? 'ml-auto max-w-[90%] border-purple-500/40 bg-purple-500/20'
-											: 'mr-auto max-w-[95%] border-white/10 bg-white/5'
+											? 'ml-auto max-w-[90%] border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.12)]'
+											: 'mr-auto max-w-[95%] border-[rgb(var(--border-color))] bg-[rgb(var(--surface))/0.8]'
 									}`}
 								>
 									{isMine && activeChatId != null && (
@@ -466,7 +467,7 @@ const ChatForUser: React.FC = () => {
 											type="button"
 											onClick={() => void handleDeleteMessage(message.message_id)}
 											disabled={deletingMessageId != null}
-											className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-100 opacity-0 transition hover:bg-red-500/20 group-hover:opacity-100 disabled:opacity-60"
+											className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-700 opacity-0 transition hover:bg-red-500/20 group-hover:opacity-100 disabled:opacity-60 dark:text-red-100"
 											aria-label="Удалить сообщение"
 											title="Удалить"
 										>
@@ -477,19 +478,19 @@ const ChatForUser: React.FC = () => {
 											)}
 										</button>
 									)}
-									<div className="mb-2 flex items-center gap-2 text-xs text-purple-200/80">
+									<div className="mb-2 flex items-center gap-2 text-xs text-[rgb(var(--muted-fg))]">
 										<MessageCircle className="h-4 w-4" />
 										<span>{senderLabel}</span>
 										<span>•</span>
 										<span>{formatDateTime(message.created_at)}</span>
 									</div>
-									<p className="whitespace-pre-wrap text-sm text-purple-50">{message.content}</p>
+									<p className="whitespace-pre-wrap text-sm text-[rgb(var(--page-fg))]">{message.content}</p>
 								</div>
 							);
 						})}
 					</div>
 
-					<div className="rounded-xl border border-white/10 bg-black/30 p-2 sm:p-3">
+					<div className="theme-panel rounded-xl p-2 sm:p-3">
 						<textarea
 							value={messageDraft}
 							onChange={(event) => setMessageDraft(event.target.value)}
@@ -502,14 +503,14 @@ const ChatForUser: React.FC = () => {
 							rows={3}
 							placeholder={activeChatId == null ? 'Сначала выберите чат...' : 'Напишите сообщение...'}
 							disabled={activeChatId == null || isSending}
-							className="w-full resize-none rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white outline-none placeholder:text-purple-100/50 focus:border-purple-400/50 disabled:opacity-60"
+							className="theme-input w-full resize-none rounded-lg p-3 text-sm"
 						/>
 						<div className="mt-2 flex justify-end">
 							<button
 								type="button"
 								onClick={() => void handleSendMessage()}
 								disabled={activeChatId == null || isSending || !messageDraft.trim()}
-								className="inline-flex items-center gap-2 rounded-lg border border-purple-400/40 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-50 transition hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+								className="theme-button-primary bg-[rgb(var(--accent))] text-[rgb(var(--accent-foreground))] disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<SendHorizontal className="h-4 w-4" />
 								Отправить
@@ -525,7 +526,7 @@ const ChatForUser: React.FC = () => {
 					onClick={() => setIsParticipantsOpen(false)}
 				>
 					<div
-						className="w-full max-w-xl rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-6"
+						className="theme-panel-strong w-full max-w-xl rounded-2xl p-5 sm:p-6"
 						onClick={(event) => event.stopPropagation()}
 						role="dialog"
 						aria-modal="true"
@@ -533,18 +534,18 @@ const ChatForUser: React.FC = () => {
 					>
 						<div className="mb-5 flex items-start justify-between gap-4">
 							<div>
-								<h2 id="chat-participants-title" className="text-xl font-bold text-white">
+								<h2 id="chat-participants-title" className="theme-heading text-xl font-bold">
 									Участники чата
 									{participantsChatId === activeChatId ? ` (${participants.length})` : ''}
 								</h2>
-								<p className="mt-1 text-sm text-purple-100/70">
+								<p className="theme-muted mt-1 text-sm">
 									{activeChat?.name?.trim() ?? ''}
 								</p>
 							</div>
 							<button
 								type="button"
 								onClick={() => setIsParticipantsOpen(false)}
-								className="rounded-lg border border-white/10 bg-black/20 p-2 text-purple-200 transition-colors hover:bg-white/10"
+								className="theme-button-secondary p-2"
 								aria-label="Закрыть окно участников"
 							>
 								<X className="h-4 w-4" />
@@ -558,13 +559,13 @@ const ChatForUser: React.FC = () => {
 						)}
 
 						{!participantsError && isParticipantsLoading && (
-							<div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+							<div className="rounded-xl border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-4 py-3 text-sm text-[rgb(var(--muted-fg))]">
 								Загружаю участников...
 							</div>
 						)}
 
 						{!participantsError && !isParticipantsLoading && participantsChatId === activeChatId && participants.length === 0 && (
-							<p className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+							<p className="rounded-xl border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-4 py-3 text-sm text-[rgb(var(--muted-fg))]">
 								В чате нет участников.
 							</p>
 						)}
@@ -576,20 +577,44 @@ const ChatForUser: React.FC = () => {
 									const profile = profilesByUserId[participant.user_id];
 									const fullName = profile ? formatFullName(profile) : '';
 									const username = profile ? formatUsername(profile) : '';
+									const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
+										if (!avatarPath) return null;
+										if (avatarPath.startsWith('http')) return avatarPath;
+										return `${API_BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+									};
+									const avatarUrl = profile ? buildAvatarUrl(profile.avatar_url) : null;
+									const getInitials = (prof: Pick<UserProfile, 'name' | 'surname'> | null) => {
+										const first = prof?.name?.[0] ?? '';
+										const second = prof?.surname?.[0] ?? '';
+										return `${first}${second}`.toUpperCase() || '??';
+									};
 									return (
 										<div
 											key={participant.user_id}
-											className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-									>
-											<div className="min-w-0">
-												<p className="truncate text-sm font-semibold text-white">
-													{isMe ? 'Вы' : (fullName || 'Пользователь')}
-												</p>
-												<p className="truncate text-xs text-purple-100/70">
-													{isMe ? 'Это вы' : (username || 'Загружаю профиль...')}
-												</p>
+											className="flex items-center justify-between gap-3 rounded-xl border border-[rgb(var(--border-color))] bg-[rgb(var(--surface-soft))/0.45] px-4 py-3"
+										>
+											<div className="min-w-0 flex items-center gap-3">
+												{avatarUrl ? (
+													<img
+														src={avatarUrl}
+														alt={profile?.username ?? `user-${participant.user_id}`}
+														className="h-10 w-10 rounded-full border border-[rgb(var(--border-color))/0.12] object-cover"
+													/>
+												) : (
+													<div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgb(var(--border-color))/0.12] bg-gradient-to-br from-[rgb(var(--accent))] to-[rgb(var(--accent-strong))] text-xs font-semibold text-[rgb(var(--accent-foreground))]">
+														{getInitials(profile ?? null)}
+													</div>
+												)}
+												<div>
+													<p className="truncate text-sm font-semibold text-[rgb(var(--page-fg))]">
+														{isMe ? 'Вы' : (fullName || 'Пользователь')}
+													</p>
+													<p className="truncate text-xs text-[rgb(var(--muted-fg))]">
+														{isMe ? 'Это вы' : (username || 'Загружаю профиль...')}
+													</p>
+												</div>
 											</div>
-											<p className="shrink-0 text-xs text-purple-100/70">с {formatDateTime(participant.joined_at)}</p>
+											<p className="shrink-0 text-xs text-[rgb(var(--muted-fg))]">с {formatDateTime(participant.joined_at)}</p>
 										</div>
 									);
 								})}

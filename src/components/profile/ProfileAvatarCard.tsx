@@ -27,7 +27,7 @@ export function ProfileAvatarCard({
   return (
     <div className="space-y-3">
       {showPlaceholder || !avatarUrl ? (
-        <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-6xl font-semibold text-white shadow-lg shadow-purple-500/30">
+        <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-color))] bg-gradient-to-br from-purple-500 to-fuchsia-500 text-6xl font-semibold text-white shadow-lg shadow-purple-500/30">
           {initials}
         </div>
       ) : (
@@ -36,7 +36,7 @@ export function ProfileAvatarCard({
           alt="Фото профиля"
           onLoad={onImageLoad}
           onError={onImageError}
-          className="h-36 w-36 shrink-0 rounded-full border border-purple-400/30 object-cover shadow-lg shadow-purple-500/30"
+          className="h-36 w-36 shrink-0 rounded-full border border-[rgb(var(--border-color))] object-cover shadow-lg shadow-purple-500/30"
         />
       )}
 
@@ -44,7 +44,7 @@ export function ProfileAvatarCard({
         type="button"
         onClick={onUploadClick}
         disabled={uploading}
-        className="flex items-center gap-2 text-base font-medium text-purple-200 transition-colors hover:text-purple-100 disabled:cursor-not-allowed disabled:opacity-50"
+        className="theme-button-secondary px-0 py-0 text-base font-medium"
       >
         <Upload className="h-5 w-5" />
         {uploading ? 'Загрузка...' : 'Загрузить фото'}

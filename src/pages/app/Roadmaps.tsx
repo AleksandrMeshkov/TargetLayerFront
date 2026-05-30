@@ -41,30 +41,30 @@ const Roadmaps: React.FC = () => {
           onSelectRoadmap={personal.selectRoadmap}
         />
 
-        <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-6">
+        <div className="theme-panel flex min-h-0 flex-col rounded-2xl p-4 sm:p-6">
           {!personal.selectedRoadmap && !personal.isLoadingRoadmaps && (
-            <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center text-sm text-purple-100/60">
+            <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-[rgb(var(--border-color))/0.3] bg-[rgb(var(--surface-soft))/0.4] px-4 py-10 text-center text-sm text-[rgb(var(--muted-fg))]">
               Выберите роудмап, чтобы увидеть его задачи.
             </div>
           )}
 
           {personal.selectedRoadmap && (
             <div className="flex min-h-0 flex-1 flex-col gap-5">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+              <div className="theme-panel rounded-2xl p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h2 className="mt-2 text-2xl font-bold text-purple-50">
+                    <h2 className="theme-heading mt-2 text-2xl font-bold">
                       {personal.selectedRoadmap.goal?.title ?? `Роудмап #${personal.selectedRoadmap.roadmap_id}`}
                     </h2>
                     {personal.selectedRoadmap.goal?.description && (
-                      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-purple-100/75">
+                      <p className="theme-muted mt-2 max-w-3xl text-sm leading-relaxed">
                         {personal.selectedRoadmap.goal.description}
                       </p>
                     )}
                   </div>
 
                   <div className="flex flex-wrap items-start justify-end gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/75">
+                    <div className="rounded-xl border border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.55] px-4 py-3 text-sm">
                       <p className="mt-1">Задач: {tasks.visibleTasks.length}</p>
                     </div>
                   </div>
@@ -73,23 +73,23 @@ const Roadmaps: React.FC = () => {
 
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-purple-100/80">Задачи роудмапа</p>
+                  <p className="theme-muted text-sm font-medium">Задачи роудмапа</p>
                   <button
                     type="button"
                     onClick={modals.addTaskModal.open}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-purple-500/20 px-4 py-2 text-sm text-purple-50 transition hover:bg-purple-500/30"
+                    className="theme-button-secondary"
                     disabled={tasks.isLoadingTasks || personal.isDeletingRoadmap}
                   >
                     Добавить задачу
                   </button>
                   {tasks.isLoadingTasks && (
-                    <span className="inline-flex items-center gap-2 text-xs text-purple-200/70">
+                    <span className="inline-flex items-center gap-2 text-xs text-[rgb(var(--muted-fg))]">
                       Загружаю задачи...
                     </span>
                   )}
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 bg-[rgb(var(--surface))]">
                   {tasks.visibleTasks.map((task) => (
                     <TaskItem
                       key={task.task_id}
@@ -109,7 +109,7 @@ const Roadmaps: React.FC = () => {
                   ))}
 
                   {!tasks.isLoadingTasks && tasks.visibleTasks.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-sm text-purple-100/60">
+                    <div className="rounded-xl border border-dashed border-[rgb(var(--border-color))/0.3] bg-[rgb(var(--surface-soft))/0.4] px-4 py-8 text-sm text-[rgb(var(--muted-fg))]">
                       У этого роудмапа пока нет задач.
                     </div>
                   )}

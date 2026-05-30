@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) => {
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden">
+    <div className="theme-shell relative flex min-h-screen items-center justify-center overflow-hidden p-6">
       <MouseFollower />
       
       <motion.div 
@@ -22,18 +22,18 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
         className="relative z-10 w-full max-w-md"
       >
         <div className="flex flex-col items-center mb-6 sm:mb-8">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/20 mb-4 border border-purple-400/30">
+          <div className="mb-4 h-16 w-16 overflow-hidden rounded-2xl border border-[rgb(var(--border-color))] shadow-lg shadow-purple-500/20">
             <img src={brainRaspberry} alt="Логотип" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h1 className="theme-heading text-2xl font-bold tracking-tight sm:text-3xl">
             <Logo showIcon={false} />
           </h1>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+        <div className="theme-panel-strong rounded-3xl p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-2">{title}</h2>
-            <p className="text-purple-200/60 text-sm">{subtitle}</p>
+            <h2 className="theme-heading mb-2 text-2xl font-semibold">{title}</h2>
+            <p className="theme-muted text-sm">{subtitle}</p>
           </div>
           {children}
         </div>

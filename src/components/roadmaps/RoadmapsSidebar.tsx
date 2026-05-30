@@ -18,24 +18,24 @@ export function RoadmapsSidebar({
   onSelectRoadmap,
 }: RoadmapsSidebarProps) {
   return (
-    <aside className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-black/30 p-4">
+    <aside className="theme-panel flex min-h-0 flex-col rounded-2xl p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-purple-200/70">Мои роудмапы</p>
-        <span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">
+        <p className="text-xs uppercase tracking-wide text-[rgb(var(--muted-fg))]">Мои роудмапы</p>
+        <span className="rounded-lg border border-[rgb(var(--border-color))/0.35] px-2 py-1 text-xs text-[rgb(var(--muted-fg))]">
           {roadmaps.length}
         </span>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {isLoading && (
-          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-purple-100/70">
+          <div className="flex items-center gap-2 rounded-xl border border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.45] px-4 py-3 text-sm text-[rgb(var(--muted-fg))]">
             <LoaderCircle className="h-4 w-4 animate-spin" />
             Загружаю роудмапы...
           </div>
         )}
 
         {!isLoading && roadmaps.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 text-sm text-purple-100/60">
+          <div className="rounded-xl border border-dashed border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.35] px-4 py-6 text-sm text-[rgb(var(--muted-fg))]">
             Роудмапы не найдены.
           </div>
         )}
@@ -50,23 +50,23 @@ export function RoadmapsSidebar({
               onClick={() => onSelectRoadmap(roadmap.roadmap_id)}
               className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                 isActive
-                  ? 'border-purple-400/60 bg-purple-500/20'
-                  : 'border-white/10 bg-white/5 hover:border-purple-300/40 hover:bg-white/10'
+                    ? 'border-[rgb(var(--accent))/0.35] bg-[rgb(var(--accent))/0.12]'
+                    : 'border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.45] hover:border-[rgb(var(--accent))/0.24] hover:bg-[rgb(var(--surface))/0.8]'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-purple-50">
+                    <p className="text-sm font-semibold text-[rgb(var(--page-fg))]">
                     {roadmap.goal?.title ?? `Роудмап #${roadmap.roadmap_id}`}
                   </p>
                 </div>
-                <span className="rounded-lg border border-white/10 px-2 py-1 text-xs text-purple-100/70">
+                  <span className="rounded-lg border border-[rgb(var(--border-color))/0.35] px-2 py-1 text-xs text-[rgb(var(--muted-fg))]">
                   {getRoadmapTaskCount(roadmap.roadmap_id)} задач
                 </span>
               </div>
 
               {roadmap.goal?.description && (
-                <p className="mt-2 line-clamp-2 text-sm text-purple-100/70">
+                  <p className="mt-2 line-clamp-2 text-sm text-[rgb(var(--muted-fg))]">
                   {roadmap.goal.description}
                 </p>
               )}

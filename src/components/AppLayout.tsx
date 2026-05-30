@@ -45,13 +45,13 @@ const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080512] text-white flex flex-col">
-      <header className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
+    <div className="theme-shell flex flex-col">
+      <header className="theme-panel-strong relative z-50 border-b">
         <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="inline-flex items-center justify-center rounded-lg p-2 text-purple-200 hover:bg-white/10 transition-colors"
+              className="theme-button-secondary p-2"
               aria-label="Переключить меню"
             >
               {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -64,7 +64,7 @@ const AppLayout: React.FC = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-purple-100 transition-colors hover:bg-white/10"
+            className="theme-button-secondary"
           >
             <LogOut className="h-4 w-4" />
             Выйти
@@ -74,7 +74,7 @@ const AppLayout: React.FC = () => {
 
       <div className="flex flex-1">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl pt-20 transition-transform duration-300 ease-in-out ${
+          className={`theme-panel-strong fixed inset-y-0 left-0 z-40 w-64 border-r pt-20 transition-transform duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -87,11 +87,7 @@ const AppLayout: React.FC = () => {
                   key={item.href}
                   to={item.href}
                   onClick={handleNavItemClick}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? 'bg-purple-600/20 text-purple-200 border border-purple-500/30'
-                      : 'text-purple-100/70 hover:bg-white/5 border border-transparent'
-                  }`}
+                  className={`theme-nav-link ${active ? 'theme-nav-link-active' : ''}`}
                 >
                   <Icon className="h-5 w-5" />
                   {item.label}

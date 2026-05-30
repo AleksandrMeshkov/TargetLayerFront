@@ -17,25 +17,25 @@ const Teams: React.FC = () => {
 				onCreateTeam={handleCreateTeam}
 			/>
 
-			<div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8">
-				<div className="my-6 h-px w-full bg-white/10" />
+			<div className="theme-panel rounded-2xl p-6 sm:p-8">
+				<div className="my-6 h-px w-full bg-[rgb(var(--border-color))/0.35]" />
 
-				<p className="text-sm text-purple-100/60">Всего команд: {total}</p>
+				<p className="theme-muted text-sm">Всего команд: {total}</p>
 
 				{loading && (
-					<p className="mt-6 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+					<p className="theme-panel mt-6 rounded-xl px-4 py-3 text-sm">
 						Загрузка списка команд...
 					</p>
 				)}
 
 				{!loading && error && (
-					<p className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+					<p className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
 						{error}
 					</p>
 				)}
 
 				{!loading && !error && teams.length === 0 && (
-					<p className="mt-6 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-purple-100/70">
+					<p className="theme-panel mt-6 rounded-xl px-4 py-3 text-sm">
 						Вы пока не состоите ни в одной команде.
 					</p>
 				)}

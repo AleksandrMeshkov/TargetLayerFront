@@ -32,29 +32,29 @@ export function TaskItem({
   onChangeEditDescription,
 }: Props) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="theme-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => onToggleComplete(task)}
-            className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-purple-100/80 transition hover:bg-white/10"
+            className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.45] text-[rgb(var(--muted-fg))] transition hover:bg-[rgb(var(--surface))/0.8]"
             disabled={Boolean(taskBusyIds[task.task_id])}
             aria-label={task.completed ? 'Снять отметку выполнено' : 'Отметить выполнено'}
           >
             {task.completed ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-400" />
             ) : (
-              <Circle className="h-5 w-5 text-purple-300" />
+              <Circle className="h-5 w-5 text-[rgb(var(--accent))]" />
             )}
           </button>
 
           <div className="min-w-0">
             {editingTaskId !== task.task_id ? (
               <>
-                <p className="font-medium text-purple-50">{task.order_index + 1}. {task.title}</p>
+                <p className="font-medium text-[rgb(var(--page-fg))]">{task.order_index + 1}. {task.title}</p>
                 {task.description && (
-                  <p className="mt-1 text-sm leading-relaxed text-purple-100/70">{task.description}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[rgb(var(--muted-fg))]">{task.description}</p>
                 )}
               </>
             ) : (
@@ -62,14 +62,14 @@ export function TaskItem({
                 <input
                   value={editTaskTitle}
                   onChange={(e) => onChangeEditTitle(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                  className="theme-input w-full px-3 py-2 text-sm"
                   placeholder="Название"
                   disabled={Boolean(taskBusyIds[task.task_id])}
                 />
                 <textarea
                   value={editTaskDescription}
                   onChange={(e) => onChangeEditDescription(e.target.value)}
-                  className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-purple-50 placeholder:text-purple-100/40 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                  className="theme-input w-full resize-none px-3 py-2 text-sm"
                   placeholder="Описание (необязательно)"
                   rows={3}
                   disabled={Boolean(taskBusyIds[task.task_id])}
@@ -85,7 +85,7 @@ export function TaskItem({
               <button
                 type="button"
                 onClick={() => onStartEdit(task)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                className="theme-button-secondary px-3 py-2 text-xs"
                 disabled={Boolean(taskBusyIds[task.task_id])}
               >
                 <Pencil className="h-4 w-4" />
@@ -94,7 +94,7 @@ export function TaskItem({
               <button
                 type="button"
                 onClick={() => onDelete(task)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                className="theme-button-secondary px-3 py-2 text-xs"
                 disabled={Boolean(taskBusyIds[task.task_id])}
               >
                 <Trash2 className="h-4 w-4" />
@@ -106,7 +106,7 @@ export function TaskItem({
               <button
                 type="button"
                 onClick={() => onSaveEdit(task)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-purple-500/20 px-3 py-2 text-xs text-purple-50 transition hover:bg-purple-500/30"
+                className="theme-button-primary px-3 py-2 text-xs"
                 disabled={Boolean(taskBusyIds[task.task_id])}
               >
                 <Save className="h-4 w-4" />
@@ -115,7 +115,7 @@ export function TaskItem({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70 transition hover:bg-white/10"
+                className="theme-button-secondary px-3 py-2 text-xs"
                 disabled={Boolean(taskBusyIds[task.task_id])}
               >
                 <X className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function TaskItem({
             </>
           )}
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-purple-100/70">
+          <div className="rounded-lg border border-[rgb(var(--border-color))/0.35] bg-[rgb(var(--surface-soft))/0.45] px-3 py-2 text-xs text-[rgb(var(--muted-fg))]">
             <p>{task.completed ? 'Выполнено' : 'Не выполнено'}</p>
           </div>
         </div>

@@ -60,15 +60,15 @@ const ChangePassword: React.FC = () => {
 
 	return (
 		<section className="space-y-6">
-			<div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8">
+			<div className="theme-panel rounded-2xl p-6 sm:p-8">
 				<div className="mb-8 flex items-center gap-3">
-					<KeyRound className="h-8 w-8 text-purple-400" />
-					<h1 className="text-3xl font-bold">Смена пароля</h1>
+					<KeyRound className="theme-accent h-8 w-8" />
+					<h1 className="theme-heading text-3xl font-bold">Смена пароля</h1>
 				</div>
 
 				<form onSubmit={handleSubmit} className="max-w-md space-y-4">
 					<div>
-						<label htmlFor="old-password" className="mb-1 block text-xs font-medium text-purple-200">
+						<label htmlFor="old-password" className="theme-label mb-1 text-xs">
 							Старый пароль
 						</label>
 						<input
@@ -78,12 +78,12 @@ const ChangePassword: React.FC = () => {
 							value={form.oldPassword}
 							onChange={handleChange}
 							autoComplete="current-password"
-							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+							className="theme-input"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="new-password" className="mb-1 block text-xs font-medium text-purple-200">
+						<label htmlFor="new-password" className="theme-label mb-1 text-xs">
 							Новый пароль
 						</label>
 						<input
@@ -93,12 +93,12 @@ const ChangePassword: React.FC = () => {
 							value={form.newPassword}
 							onChange={handleChange}
 							autoComplete="new-password"
-							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+							className="theme-input"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="confirm-password" className="mb-1 block text-xs font-medium text-purple-200">
+						<label htmlFor="confirm-password" className="theme-label mb-1 text-xs">
 							Подтверждение нового пароля
 						</label>
 						<input
@@ -108,7 +108,7 @@ const ChangePassword: React.FC = () => {
 							value={form.confirmPassword}
 							onChange={handleChange}
 							autoComplete="new-password"
-							className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none placeholder:text-purple-100/40"
+							className="theme-input"
 						/>
 					</div>
 
@@ -116,7 +116,7 @@ const ChangePassword: React.FC = () => {
 						<button
 							type="submit"
 							disabled={submitting}
-							className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
+							className="theme-button-primary"
 						>
 							{submitting ? 'Сохранение...' : 'Изменить пароль'}
 						</button>
@@ -124,7 +124,7 @@ const ChangePassword: React.FC = () => {
 							type="button"
 							onClick={() => navigate('/app/profile')}
 							disabled={submitting}
-							className="rounded-lg border border-white/10 bg-black/20 px-4 py-2 text-sm font-semibold text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
+							className="theme-button-secondary"
 						>
 							Отмена
 						</button>

@@ -26,14 +26,14 @@ export function ProfileNameCard({
   return (
     <div className="space-y-2">
       <div>
-        <label className="mb-1 block text-sm font-medium text-purple-200">ФИО</label>
+        <label className="theme-label mb-1">ФИО</label>
         {!isEditing ? (
           <input
             type="text"
             value={fullName}
             readOnly
             onClick={onStartEdit}
-            className="w-full cursor-pointer rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none transition-colors hover:border-purple-400/40 sm:w-96"
+            className="theme-input w-full cursor-pointer sm:w-96"
           />
         ) : (
           <div className="space-y-2 sm:w-96">
@@ -42,28 +42,28 @@ export function ProfileNameCard({
               value={nameDraft.surname}
               onChange={(event) => onChangeDraft({ ...nameDraft, surname: event.target.value })}
               placeholder="Фамилия"
-              className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
+              className="theme-input"
             />
             <input
               type="text"
               value={nameDraft.name}
               onChange={(event) => onChangeDraft({ ...nameDraft, name: event.target.value })}
               placeholder="Имя"
-              className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
+              className="theme-input"
             />
             <input
               type="text"
               value={nameDraft.patronymic}
               onChange={(event) => onChangeDraft({ ...nameDraft, patronymic: event.target.value })}
               placeholder="Отчество (опционально)"
-              className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40"
+              className="theme-input"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onSave}
                 disabled={saving}
-                className="rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-60"
+                className="theme-button-primary"
               >
                 {saving ? 'Сохранение...' : 'Сохранить'}
               </button>
@@ -71,7 +71,7 @@ export function ProfileNameCard({
                 type="button"
                 onClick={onCancelEdit}
                 disabled={saving}
-                className="rounded-lg border border-white/10 bg-black/20 px-4 py-2.5 text-sm font-semibold text-purple-200 transition-colors hover:bg-white/10 disabled:opacity-60"
+                className="theme-button-secondary"
               >
                 Отмена
               </button>
@@ -81,12 +81,12 @@ export function ProfileNameCard({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-purple-200">Никнейм</label>
+        <label className="theme-label mb-1">Никнейм</label>
         <input
           type="text"
           value={username}
           readOnly
-          className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-purple-100/40 sm:w-96"
+          className="theme-input w-full sm:w-96"
         />
       </div>
     </div>

@@ -10,7 +10,7 @@ type Props = {
 
 const MessageComposer: React.FC<Props> = ({ value, onChange, onSubmit, disabled }) => {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/30 p-2 sm:p-3">
+    <div className="rounded-xl border border-[rgb(var(--border-color))/0.25] bg-[rgb(var(--surface-soft))/0.45] p-2 sm:p-3">
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -22,14 +22,14 @@ const MessageComposer: React.FC<Props> = ({ value, onChange, onSubmit, disabled 
         }}
         rows={3}
         placeholder="Опишите цель или задачу"
-        className="w-full resize-none rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white outline-none placeholder:text-purple-100/50 focus:border-purple-400/50"
+        className="theme-input w-full resize-none text-sm"
       />
       <div className="mt-2 flex justify-end">
         <button
           type="button"
           onClick={onSubmit}
           disabled={disabled || !value.trim()}
-          className="inline-flex items-center gap-2 rounded-lg border border-purple-400/40 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-50 transition hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+          className="theme-button-primary bg-[rgb(var(--accent))] text-[rgb(var(--accent-foreground))]"
         >
           <SendHorizontal className="h-4 w-4" />
           Отправить
