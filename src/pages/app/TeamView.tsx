@@ -40,6 +40,7 @@ const TeamView: React.FC = () => {
 		setNewTeamName,
 		savingName,
 		deleting,
+		removingMemberUserId,
 		myUserId,
 		isAdmin,
 		updatingRoleUserId,
@@ -50,6 +51,7 @@ const TeamView: React.FC = () => {
 		handleRenameTeam,
 		handleDeleteTeam,
 		handleLeaveTeam,
+		removeMember,
 		updateMemberRole,
 		markAvatarAsFailed,
 	} = useTeamMembers({ teamId: numericTeamId, initialTeamName: teamName ?? '' });
@@ -335,10 +337,14 @@ const TeamView: React.FC = () => {
 										isAdmin={Boolean(isAdmin)}
 										myUserId={myUserId}
 										updatingRoleUserId={updatingRoleUserId}
+										removingMemberUserId={removingMemberUserId}
 										failedAvatarUserIds={failedAvatarUserIds}
 										onAvatarError={markAvatarAsFailed}
 										onUpdateRole={(userId, roleId) => {
 											void updateMemberRole(userId, roleId);
+										}}
+										onRemoveMember={(userId) => {
+											void removeMember(userId);
 										}}
 									/>
 								))}

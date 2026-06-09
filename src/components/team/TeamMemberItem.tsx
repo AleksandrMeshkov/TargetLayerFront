@@ -8,9 +8,11 @@ type TeamMemberItemProps = {
 	isAdmin: boolean;
 	myUserId: number | null;
 	updatingRoleUserId: number | null;
+	removingMemberUserId: number | null;
 	failedAvatarUserIds: Set<number>;
 	onAvatarError: (userId: number) => void;
 	onUpdateRole: (userId: number, roleId: number) => void;
+	onRemoveMember: (userId: number) => void;
 };
 
 const buildAvatarUrl = (avatarPath: string | null | undefined): string | null => {
@@ -40,9 +42,11 @@ export function TeamMemberItem({
 	isAdmin,
 	myUserId,
 	updatingRoleUserId,
+	removingMemberUserId,
 	failedAvatarUserIds,
 	onAvatarError,
 	onUpdateRole,
+	onRemoveMember,
 }: TeamMemberItemProps) {
 	const { membership, profile } = member;
 	const avatarUrl = buildAvatarUrl(profile.avatar_url);
@@ -73,22 +77,33 @@ export function TeamMemberItem({
 			{isAdmin && membership.user_id !== myUserId ? (
 				<div className="flex items-center gap-2">
 					{membership.team_role_id === 2 && (
-						<button
-							type="button"
-							onClick={() => onUpdateRole(membership.user_id, 1)}
-							disabled={updatingRoleUserId === membership.user_id}
-							className="theme-button-primary px-3 py-1 text-xs disabled:opacity-60"
-							title="Назначить администратором"
-						>
-							<Shield className="h-3 w-3" />
-							{updatingRoleUserId === membership.user_id ? '...' : 'Администратор'}
-						</button>
+						<>
+							<button
+								type="button"
+								onClick={() => onUpdateRole(membership.user_id, 1)}
+								disabled={updatingRoleUserId === membership.user_id || removingMemberUserId === membership.user_id}
+								className="theme-button-primary px-3 py-1 text-xs disabled:opacity-60"
+								title="Назначить администратором"
+							>
+								<Shield className="h-3 w-3" />
+								{updatingRoleUserId === membership.user_id ? '...' : 'Администратор'}
+							</button>
+							<button
+								type="button"
+								onClick={() => onRemoveMember(membership.user_id)}
+								disabled={updatingRoleUserId === membership.user_id || removingMemberUserId === membership.user_id}
+								className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+								title="Исключить участника из команды"
+							>
+								{removingMemberUserId === membership.user_id ? '...' : 'Исключить'}
+							</button>
+						</>
 					)}
 					{membership.team_role_id === 1 && (
 						<button
 							type="button"
 							onClick={() => onUpdateRole(membership.user_id, 2)}
-							disabled={updatingRoleUserId === membership.user_id}
+							disabled={updatingRoleUserId === membership.user_id || removingMemberUserId === membership.user_id}
 							className="theme-button-secondary px-3 py-1 text-xs disabled:opacity-60"
 							title="Понизить до участника"
 						>

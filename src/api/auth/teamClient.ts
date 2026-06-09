@@ -104,3 +104,18 @@ export async function updateMemberRole(teamId: number, userId: number, roleId: n
 
   return (await response.json()) as TeamMemberItem;
 }
+
+export async function removeTeamMember(teamId: number, userId: number): Promise<ApiStatusResponse> {
+  const response = await fetchWithAuthRetry(`/api/v1/teams/${teamId}/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Не удалось исключить участника'));
+  }
+
+  return (await response.json()) as ApiStatusResponse;
+}

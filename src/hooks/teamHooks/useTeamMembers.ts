@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getCurrentProfile, getUserById } from '../../api/auth/userClient';
-import { deleteTeam, getTeamMembers, leaveTeam, renameTeam, updateMemberRole as updateMemberRoleRequest } from '../../api/auth/teamClient';
+import { deleteTeam, getTeamMembers, leaveTeam, removeTeamMember, renameTeam, updateMemberRole as updateMemberRoleRequest } from '../../api/auth/teamClient';
 import type { TeamMemberView } from '../../types/teamTypes/teamTypes';
 
 type UseTeamMembersParams = {
@@ -21,6 +21,7 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 	const [newTeamName, setNewTeamName] = useState(initialTeamName);
 	const [savingName, setSavingName] = useState(false);
 	const [deleting, setDeleting] = useState(false);
+	const [removingMemberUserId, setRemovingMemberUserId] = useState<number | null>(null);
 	const [myUserId, setMyUserId] = useState<number | null>(null);
 	const [failedAvatarUserIds, setFailedAvatarUserIds] = useState<Set<number>>(new Set());
 	const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
@@ -82,6 +83,7 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 		setIsModalOpen(false);
 		setFailedAvatarUserIds(new Set());
 		setUpdatingRoleUserId(null);
+		setRemovingMemberUserId(null);
 
 		const fetchCurrentUser = async () => {
 			try {
@@ -133,6 +135,30 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			toast.error(message);
 		} finally {
 			setUpdatingRoleUserId(null);
+		}
+	}, [teamId]);
+
+	const removeMember = useCallback(async (userId: number) => {
+		if (!Number.isFinite(teamId) || teamId <= 0) {
+			toast.error('Некорректный идентификатор команды');
+			return;
+		}
+
+		const confirmed = window.confirm('Исключить участника из команды? Это действие нельзя отменить.');
+		if (!confirmed) {
+			return;
+		}
+
+		setRemovingMemberUserId(userId);
+		try {
+			await removeTeamMember(teamId, userId);
+			setMembers((prev) => prev.filter((entry) => entry.membership.user_id !== userId));
+			toast.success('Участник исключён из команды');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Не удалось исключить участника';
+			toast.error(message);
+		} finally {
+			setRemovingMemberUserId(null);
 		}
 	}, [teamId]);
 
@@ -223,6 +249,7 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 		setNewTeamName,
 		savingName,
 		deleting,
+		removingMemberUserId,
 		myUserId,
 		isAdmin,
 		updatingRoleUserId,
@@ -233,6 +260,7 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 		handleRenameTeam,
 		handleDeleteTeam,
 		handleLeaveTeam,
+		removeMember,
 		updateMemberRole,
 		markAvatarAsFailed,
 	};
