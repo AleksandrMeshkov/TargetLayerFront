@@ -12,7 +12,6 @@ import ForgotPassword from './src/pages/ForgotPassword.tsx';
 import ResetPassword from './src/pages/ResetPassword.tsx';
 import NotFound from './src/pages/NotFound.tsx';
 import AppLayout from './src/components/AppLayout.tsx';
-import Dashboard from './src/pages/app/Dashboard.tsx';
 import Chat from './src/pages/app/Chat.tsx';
 import ChatForUser from './src/pages/app/ChatForUser.tsx';
 import Roadmaps from './src/pages/app/Roadmaps.tsx';
@@ -37,7 +36,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 
 const PublicOnlyRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   if (isAuthenticated()) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/app/profile" replace />;
   }
   return children;
 };
@@ -101,7 +100,7 @@ const AppContent: React.FC = () => {
                 </ProtectedRoute>
               )}
             >
-              <Route index element={<Dashboard />} />
+              <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="chat" element={<Chat />} />
               <Route path="chats" element={<ChatForUser />} />

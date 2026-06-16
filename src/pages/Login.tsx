@@ -26,7 +26,7 @@ export default function Login() {
       });
       setAuthSession(tokens);
       toast.success('Успешный вход!');
-      navigate('/app');
+      navigate('/app/profile');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось выполнить вход';
       toast.error(message);

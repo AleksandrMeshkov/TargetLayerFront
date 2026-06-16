@@ -56,7 +56,7 @@ const AppLayout: React.FC = () => {
             >
               {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
-            <Link to="/app" className="flex items-center gap-2">
+            <Link to="/app/profile" className="flex items-center gap-2">
               <Logo />
             </Link>
           </div>

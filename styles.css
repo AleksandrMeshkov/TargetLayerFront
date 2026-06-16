@@ -172,7 +172,6 @@
     color: rgb(var(--page-fg));
   }
 
-  /* Light-theme overrides for stronger contrast on auth pages and inputs */
   :root[data-theme='light'] .theme-panel {
     background-color: rgb(var(--surface) / 0.98);
     backdrop-filter: none;
@@ -201,19 +200,16 @@
   }
 
   :root[data-theme='light'] .theme-muted {
-    /* stronger muted color in light theme for better readability */
     color: rgb(var(--page-fg) / 0.75);
   }
 }
 
-/* Fixed hero styles that must not change with theme */
 .fixed-hero-title {
   color: #ffffff !important;
   -webkit-text-stroke: 0px transparent;
 }
 
 .fixed-hero-subtitle {
-  /* Tailwind purple-200 ~ #E9D5FF with 60% opacity */
   color: rgba(233,213,255,0.6) !important;
 }
 
@@ -224,7 +220,6 @@ body {
   font-weight: 500;
 }
 
-/* Improve mobile overflow handling */
 html { box-sizing: border-box; }
 *, *::before, *::after { box-sizing: inherit; }
 img { max-width: 100%; height: auto; display: block; }

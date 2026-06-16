@@ -78,8 +78,6 @@ export function useChatWebSocket(chatId: number | null) {
           return;
         }
 
-        // In dev, WS through Vite proxy can sometimes be flaky for large history payloads.
-        // Allow overriding WS base URL to connect directly.
         const wsHttpBase = import.meta.env.VITE_WS_BASE_URL ?? API_BASE_URL;
         const wsBaseUrl = toWebSocketBaseUrl(wsHttpBase);
         const url = `${wsBaseUrl}/api/v1/chats/${chatId}/ws?token=${encodeURIComponent(token)}`;
@@ -128,7 +126,6 @@ export function useChatWebSocket(chatId: number | null) {
                 break;
             }
           } catch {
-            // ignore malformed messages
           }
         };
 
@@ -198,7 +195,6 @@ export function useChatWebSocket(chatId: number | null) {
     try {
       sendAction({ action: 'leave' });
     } catch {
-      // ignore
     } finally {
       closeSocket();
     }

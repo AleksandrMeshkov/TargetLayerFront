@@ -37,7 +37,6 @@ function parseAssistantRoadmap(rawContent: string): AIRoadmapResponse | null {
     const parsed = JSON.parse(rawContent) as unknown;
     if (isRoadmapResponse(parsed)) return parsed;
   } catch {
-    // ignore
   }
   return null;
 }

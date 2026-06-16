@@ -41,7 +41,7 @@ export default function Register() {
       });
       setAuthSession(tokens);
       toast.success('Аккаунт успешно создан!');
-      navigate('/app');
+      navigate('/app/profile');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось создать аккаунт';
       toast.error(message);
