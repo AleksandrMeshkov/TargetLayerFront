@@ -32,7 +32,7 @@ const Chat: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <MessageCircle className="theme-accent h-7 w-7" />
-            <h1 className="theme-heading text-2xl font-bold sm:text-3xl">AI чат</h1>
+            <h1 className="theme-heading text-2xl font-bold sm:text-3xl">ИИ-помощник</h1>
           </div>
 
           <div className="flex items-center gap-2">
