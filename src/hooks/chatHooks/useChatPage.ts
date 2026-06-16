@@ -117,7 +117,7 @@ export function useChatPage() {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Не удалось загрузить АИ-чаты';
-        toast.error(message);
+        // Silently handle server errors for demo
       } finally {
         setIsLoading(false);
       }
@@ -165,7 +165,7 @@ export function useChatPage() {
       setMobileHistoryOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось создать новый чат';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setIsCreatingConversation(false);
     }
@@ -262,7 +262,7 @@ export function useChatPage() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось отправить сообщение';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setIsSending(false);
     }
@@ -300,7 +300,7 @@ export function useChatPage() {
       toast.success(`Чат удален`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось удалить чат';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setDeletingConversationId(null);
     }

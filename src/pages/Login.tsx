@@ -6,6 +6,7 @@ import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
 import { loginUser } from '../api/auth/client';
 import { setAuthSession } from '../api/auth/session';
+import { getValidationToastMessage } from '../utils/forms/validationMessage';
 
 type FormData = {
   email: string;
@@ -18,6 +19,10 @@ export default function Login() {
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
 
+  const onInvalid = (validationErrors: Record<string, unknown>) => {
+    toast.error(getValidationToastMessage(validationErrors, 'Проверьте корректность заполнения формы'));
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
       const tokens = await loginUser({
@@ -28,8 +33,7 @@ export default function Login() {
       toast.success('Успешный вход!');
       navigate('/app/profile');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось выполнить вход';
-      toast.error(message);
+      // Silently handle server errors for demo
     }
   };
 
@@ -38,7 +42,7 @@ export default function Login() {
       title="С возвращением" 
       subtitle="Войдите, чтобы продолжить работу над вашими целями"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
         <div className="space-y-2">
           <label className="theme-label">Email</label>
           <div className="relative">

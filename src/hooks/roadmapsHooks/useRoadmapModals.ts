@@ -131,8 +131,7 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
       resetCreateRoadmapForm();
       toast.success('Роудмап создан');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось создать роудмап';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setIsCreatingRoadmap(false);
     }

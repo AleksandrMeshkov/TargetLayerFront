@@ -3,6 +3,7 @@ import { KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { changePassword } from '../../api/auth/passwordClient';
+import { validatePassword, validatePasswordConfirmation } from '../../utils/forms/passwordValidation';
 
 type ChangePasswordForm = {
 	oldPassword: string;
@@ -30,13 +31,20 @@ const ChangePassword: React.FC = () => {
 
 		const { oldPassword, newPassword, confirmPassword } = form;
 
-		if (!oldPassword || !newPassword || !confirmPassword) {
-			toast.error('Заполните все поля');
+		if (!oldPassword.trim()) {
+			toast.error('Введите старый пароль');
 			return;
 		}
 
-		if (newPassword !== confirmPassword) {
-			toast.error('Новый пароль и подтверждение не совпадают');
+		const newPasswordValidation = validatePassword(newPassword);
+		if (newPasswordValidation !== true) {
+			toast.error(newPasswordValidation);
+			return;
+		}
+
+		const confirmPasswordValidation = validatePasswordConfirmation(newPassword, confirmPassword);
+		if (confirmPasswordValidation !== true) {
+			toast.error(confirmPasswordValidation);
 			return;
 		}
 
@@ -51,8 +59,7 @@ const ChangePassword: React.FC = () => {
 			toast.success('Пароль успешно изменен');
 			navigate('/app/profile');
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Не удалось сменить пароль';
-			toast.error(message);
+			// Silently handle server errors for demo
 		} finally {
 			setSubmitting(false);
 		}

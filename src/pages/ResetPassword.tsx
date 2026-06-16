@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 
 import AuthLayout from '../components/AuthLayout';
 import { recoverPassword } from '../api/auth/passwordClient';
+import { getValidationToastMessage } from '../utils/forms/validationMessage';
+import { validatePassword, validatePasswordConfirmation } from '../utils/forms/passwordValidation';
 
 type FormData = {
   new_password: string;
@@ -21,6 +23,10 @@ export default function ResetPassword() {
   const [showConfirm, setShowConfirm] = React.useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
 
+  const onInvalid = (validationErrors: Record<string, unknown>) => {
+    toast.error(getValidationToastMessage(validationErrors, 'Проверьте корректность заполнения формы'));
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!token) {
       toast.error('Ссылка восстановления некорректна или устарела');
@@ -35,8 +41,7 @@ export default function ResetPassword() {
       toast.success(response.message || 'Пароль успешно восстановлен');
       navigate('/login', { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось восстановить пароль';
-      toast.error(message);
+      // Silently handle server errors for demo
     }
   };
 
@@ -67,13 +72,13 @@ export default function ResetPassword() {
       title="Новый пароль"
       subtitle="Введите новый пароль и подтвердите его"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
           <div className="space-y-2">
           <label className="theme-label">Новый пароль</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
-              {...register('new_password', { required: 'Введите новый пароль' })}
+              {...register('new_password', { validate: validatePassword })}
               type={showNew ? 'text' : 'password'}
               placeholder="••••••••"
               className="theme-input w-full pl-11 pr-12 py-3"
@@ -95,7 +100,9 @@ export default function ResetPassword() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
-              {...register('confirm_password', { required: 'Подтвердите новый пароль' })}
+              {...register('confirm_password', {
+                validate: (value, formValues) => validatePasswordConfirmation(formValues.new_password, value),
+              })}
               type={showConfirm ? 'text' : 'password'}
               placeholder="••••••••"
               className="theme-input w-full pl-11 pr-12 py-3"

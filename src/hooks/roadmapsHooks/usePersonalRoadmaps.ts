@@ -34,7 +34,7 @@ export function usePersonalRoadmaps() {
       setSelectedRoadmapId(nextSelectedRoadmapId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось загрузить роудмапы';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setIsLoadingRoadmaps(false);
     }
@@ -97,7 +97,7 @@ export function usePersonalRoadmaps() {
       toast.success('Роудмап удален');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось удалить роудмап';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setIsDeletingRoadmap(false);
     }

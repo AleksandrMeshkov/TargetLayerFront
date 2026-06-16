@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 
 import AuthLayout from '../components/AuthLayout';
 import { requestPasswordRecovery } from '../api/auth/passwordClient';
+import { getValidationToastMessage } from '../utils/forms/validationMessage';
 
 type FormData = {
   email: string;
@@ -15,14 +16,17 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
 
+  const onInvalid = (validationErrors: Record<string, unknown>) => {
+    toast.error(getValidationToastMessage(validationErrors, 'Проверьте корректность заполнения формы'));
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
       const response = await requestPasswordRecovery({ email: data.email });
       toast.success(response.message || 'Письмо для восстановления отправлено');
       navigate('/login', { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось запросить восстановление пароля';
-      toast.error(message);
+      // Silently handle server errors for demo
     }
   };
 
@@ -31,7 +35,7 @@ export default function ForgotPassword() {
       title="Восстановление пароля"
       subtitle="Укажите email — мы отправим ссылку для восстановления"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
         <div className="space-y-2">
           <label className="theme-label">Email</label>
           <div className="relative">

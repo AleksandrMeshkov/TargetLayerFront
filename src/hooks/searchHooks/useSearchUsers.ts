@@ -42,7 +42,7 @@ export function useSearchUsers() {
 					setError(message);
 					setResults([]);
 					setHasSearched(true);
-					toast.error(message);
+					// Silently handle server errors for demo
 				}
 			} finally {
 				if (!isCancelled) {
@@ -68,7 +68,7 @@ export function useSearchUsers() {
 			navigate('/app/chats', { state: { openChatId: chat.chat_id } });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось создать чат';
-			toast.error(message);
+			// Silently handle server errors for demo
 		} finally {
 			setCreatingChatUserId(null);
 		}

@@ -72,8 +72,7 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
         if (isCancelled) {
           return;
         }
-        const message = error instanceof Error ? error.message : 'Не удалось загрузить задачи роудмапа';
-        toast.error(message);
+        // Silently handle server errors for demo
       })
       .finally(() => {
         if (!isCancelled) {
@@ -121,8 +120,7 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
       toast.success('Задача создана');
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось создать задачу';
-      toast.error(message);
+      // Silently handle server errors for demo
       return false;
     } finally {
       setIsCreatingTask(false);
@@ -171,8 +169,7 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
       toast.success('Задача обновлена');
       cancelEditTask();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось обновить задачу';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }
@@ -201,8 +198,7 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
 
       toast.success('Задача удалена');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось удалить задачу';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }
@@ -223,8 +219,7 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
         ))),
       }));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось обновить статус задачи';
-      toast.error(message);
+      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }

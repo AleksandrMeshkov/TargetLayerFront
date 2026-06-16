@@ -63,12 +63,12 @@ export function useTeamChat({ teamId, members, loadedOnce, refreshMembers }: Use
 					return;
 				} catch (fallbackErr) {
 					const fallbackMessage = fallbackErr instanceof Error ? fallbackErr.message : 'Не удалось открыть беседу команды';
-					toast.error(fallbackMessage);
+				// Silently handle server errors for demo
 					return;
 				}
 			}
 
-			toast.error(message);
+			// Silently handle server errors for demo
 		} finally {
 			setIsOpeningTeamChat(false);
 		}

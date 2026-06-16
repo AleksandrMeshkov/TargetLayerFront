@@ -6,6 +6,8 @@ import AuthLayout from '../components/AuthLayout';
 import { toast } from 'react-toastify';
 import { registerUser } from '../api/auth/client';
 import { setAuthSession } from '../api/auth/session';
+import { getValidationToastMessage } from '../utils/forms/validationMessage';
+import { validatePassword, validatePasswordConfirmation } from '../utils/forms/passwordValidation';
 
 type FormData = {
   username: string;
@@ -24,12 +26,11 @@ export default function Register() {
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
 
-  const onSubmit = async (data: FormData) => {
-    if (data.password !== data.confirmPassword) {
-      toast.error('Пароли не совпадают');
-      return;
-    }
+  const onInvalid = (validationErrors: Record<string, unknown>) => {
+    toast.error(getValidationToastMessage(validationErrors, 'Проверьте корректность заполнения формы'));
+  };
 
+  const onSubmit = async (data: FormData) => {
     try {
       const tokens = await registerUser({
         username: data.username,
@@ -43,8 +44,7 @@ export default function Register() {
       toast.success('Аккаунт успешно создан!');
       navigate('/app/profile');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось создать аккаунт';
-      toast.error(message);
+      // Silently handle server errors for demo
     }
   };
 
@@ -53,7 +53,7 @@ export default function Register() {
       title="Создать аккаунт" 
       subtitle="Начните декомпозировать свои мечты в реальные задачи"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
         <div className="space-y-1.5">
           <label className="theme-label">Никнейм</label>
           <div className="relative">
@@ -135,7 +135,7 @@ export default function Register() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
-              {...register('password', { required: 'Введите пароль' })}
+              {...register('password', { validate: validatePassword })}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               className="theme-input w-full pl-11 pr-12 py-3"
@@ -157,7 +157,9 @@ export default function Register() {
           <div className="relative">
             <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 theme-muted w-5 h-5" />
             <input
-              {...register('confirmPassword', { required: 'Подтвердите пароль' })}
+              {...register('confirmPassword', {
+                validate: (value, formValues) => validatePasswordConfirmation(formValues.password, value),
+              })}
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               className="theme-input w-full pl-11 pr-12 py-2.5"

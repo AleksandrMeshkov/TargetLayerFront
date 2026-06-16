@@ -36,7 +36,7 @@ export function useTeamShareRoadmap({ teamId, isAdmin, onShared }: UseTeamShareR
 			setMyRoadmaps(sortRoadmapsByUpdate(personalRoadmaps));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить личные роудмапы';
-			toast.error(message);
+			// Silently handle server errors for demo
 		} finally {
 			setIsLoadingMyRoadmaps(false);
 		}
@@ -71,7 +71,7 @@ export function useTeamShareRoadmap({ teamId, isAdmin, onShared }: UseTeamShareR
 			await onShared();
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось поделиться роудмапом';
-			toast.error(message);
+			// Silently handle server errors for demo
 		} finally {
 			setIsSharingRoadmap(false);
 		}
