@@ -125,13 +125,11 @@ const Roadmaps: React.FC = () => {
         isSubmitting={modals.createRoadmapModal.isSubmitting}
         title={modals.createRoadmapModal.title}
         description={modals.createRoadmapModal.description}
-        teamId={modals.createRoadmapModal.teamId}
         tasks={modals.createRoadmapModal.tasks}
         onClose={modals.createRoadmapModal.close}
         onSubmit={modals.createRoadmapModal.onSubmit}
         onChangeTitle={modals.createRoadmapModal.setTitle}
         onChangeDescription={modals.createRoadmapModal.setDescription}
-        onChangeTeamId={modals.createRoadmapModal.setTeamId}
         onChangeTask={modals.createRoadmapModal.onChangeTask}
         onAddTask={modals.createRoadmapModal.onAddTask}
         onRemoveTask={modals.createRoadmapModal.onRemoveTask}

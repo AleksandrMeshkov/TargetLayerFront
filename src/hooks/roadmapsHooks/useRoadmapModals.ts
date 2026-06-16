@@ -19,7 +19,6 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
 
   const [createRoadmapTitle, setCreateRoadmapTitle] = useState('');
   const [createRoadmapDescription, setCreateRoadmapDescription] = useState('');
-  const [createRoadmapTeamId, setCreateRoadmapTeamId] = useState('');
   const [createRoadmapTasks, setCreateRoadmapTasks] = useState<RoadmapTaskDraft[]>([{ title: '', description: '' }]);
   const [isCreatingRoadmap, setIsCreatingRoadmap] = useState(false);
 
@@ -29,7 +28,6 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
   const resetCreateRoadmapForm = useCallback(() => {
     setCreateRoadmapTitle('');
     setCreateRoadmapDescription('');
-    setCreateRoadmapTeamId('');
     setCreateRoadmapTasks([{ title: '', description: '' }]);
   }, []);
 
@@ -83,20 +81,10 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
   const submitCreateRoadmap = useCallback(async () => {
     const title = createRoadmapTitle.trim();
     const description = createRoadmapDescription.trim();
-    const teamIdValue = createRoadmapTeamId.trim();
 
     if (!title) {
       toast.error('Введите название роудмапа');
       return;
-    }
-
-    let teamId: number | null = null;
-    if (teamIdValue) {
-      teamId = Number(teamIdValue);
-      if (!Number.isInteger(teamId) || teamId <= 0) {
-        toast.error('ID команды должен быть положительным числом');
-        return;
-      }
     }
 
     const normalizedTasks = createRoadmapTasks.map((task) => ({
@@ -122,7 +110,6 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
       const created = await createRoadmap({
         title,
         description: description.length > 0 ? description : null,
-        team_id: teamId,
         tasks: tasks.length > 0 ? tasks : undefined,
       });
 
@@ -135,7 +122,7 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
     } finally {
       setIsCreatingRoadmap(false);
     }
-  }, [createRoadmapTitle, createRoadmapDescription, createRoadmapTeamId, createRoadmapTasks, onRoadmapCreated, closeCreateRoadmap, resetCreateRoadmapForm]);
+  }, [createRoadmapTitle, createRoadmapDescription, createRoadmapTasks, onRoadmapCreated, closeCreateRoadmap, resetCreateRoadmapForm]);
 
   return {
     createRoadmapModal: {
@@ -146,8 +133,6 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
       setTitle: setCreateRoadmapTitle,
       description: createRoadmapDescription,
       setDescription: setCreateRoadmapDescription,
-      teamId: createRoadmapTeamId,
-      setTeamId: setCreateRoadmapTeamId,
       tasks: createRoadmapTasks,
       onChangeTask: handleCreateRoadmapTaskChange,
       onAddTask: addCreateRoadmapTask,

@@ -12,13 +12,11 @@ type CreateRoadmapModalProps = {
   isSubmitting: boolean;
   title: string;
   description: string;
-  teamId: string;
   tasks: RoadmapTaskDraft[];
   onClose: () => void;
   onSubmit: () => void;
   onChangeTitle: (value: string) => void;
   onChangeDescription: (value: string) => void;
-  onChangeTeamId: (value: string) => void;
   onChangeTask: (index: number, field: keyof RoadmapTaskDraft, value: string) => void;
   onAddTask: () => void;
   onRemoveTask: (index: number) => void;
@@ -29,13 +27,11 @@ export function CreateRoadmapModal({
   isSubmitting,
   title,
   description,
-  teamId,
   tasks,
   onClose,
   onSubmit,
   onChangeTitle,
   onChangeDescription,
-  onChangeTeamId,
   onChangeTask,
   onAddTask,
   onRemoveTask,
@@ -65,14 +61,6 @@ export function CreateRoadmapModal({
               className="theme-input"
               placeholder="Описание роудмапа (необязательно)"
               rows={3}
-              disabled={isSubmitting}
-            />
-            <input
-              value={teamId}
-              onChange={(event) => onChangeTeamId(event.target.value)}
-              className="theme-input"
-              placeholder="ID команды, если роудмап нужно сразу привязать к команде"
-              inputMode="numeric"
               disabled={isSubmitting}
             />
           </div>
