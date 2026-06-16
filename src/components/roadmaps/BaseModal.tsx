@@ -40,7 +40,7 @@ export function BaseModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-6">
       <button
         type="button"
         className="absolute inset-0 cursor-default bg-[rgb(var(--page-bg))/0.6] backdrop-blur-sm"
@@ -48,7 +48,7 @@ export function BaseModal({
         aria-label={closeLabel}
       />
 
-      <div className={`relative w-full ${maxWidthClassName} rounded-3xl p-5 shadow-none theme-panel-strong`}>
+      <div className={`relative my-auto w-full ${maxWidthClassName} max-h-[calc(100vh-3rem)] overflow-hidden rounded-3xl p-5 shadow-none theme-panel-strong`}>
         <div className="flex items-start justify-between gap-4">
           <div>
             {subtitle ? <p className="text-xs uppercase tracking-wide theme-muted">{subtitle}</p> : null}
@@ -64,7 +64,7 @@ export function BaseModal({
           </button>
         </div>
 
-        <div className="mt-5">{children}</div>
+        <div className="mt-5 max-h-[calc(100vh-10rem)] overflow-y-auto pr-1">{children}</div>
       </div>
     </div>
   );
