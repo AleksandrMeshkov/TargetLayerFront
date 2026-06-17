@@ -78,7 +78,6 @@ const ChatForUser: React.FC = () => {
 				setActiveChatId(nextChatId);
 			} catch (err) {
 				const message = err instanceof Error ? err.message : 'Не удалось загрузить чаты';
-				// Silently handle server errors for demo
 			}
 		};
 
@@ -175,7 +174,6 @@ const ChatForUser: React.FC = () => {
 			chatSocket.sendMessage(normalizedMessage, 'text');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось отправить сообщение';
-			// Silently handle server errors for demo
 		} finally {
 			setIsSending(false);
 		}
@@ -201,7 +199,6 @@ const ChatForUser: React.FC = () => {
 			chatSocket.deleteMessage(messageId);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось удалить сообщение';
-			// Silently handle server errors for demo
 			setPendingDeletedMessageIds((prev) => prev.filter((id) => id !== messageId));
 		} finally {
 			setDeletingMessageId(null);
@@ -230,7 +227,6 @@ const ChatForUser: React.FC = () => {
 			setIsParticipantsOpen(false);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось выйти из чата';
-			// Silently handle server errors for demo
 		} finally {
 			setIsLeavingChat(false);
 		}
@@ -276,7 +272,6 @@ const ChatForUser: React.FC = () => {
 			toast.success('Название чата обновлено');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось переименовать чат';
-			// Silently handle server errors for demo
 		} finally {
 			setIsRenamingChat(false);
 		}

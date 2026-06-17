@@ -69,7 +69,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить участников команды';
 			setError(message);
-			// Silently handle server errors for demo
 			return null;
 		} finally {
 			setLoading(false);
@@ -132,7 +131,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			toast.success(`Пользователь теперь ${roleText}`);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось обновить роль';
-			// Silently handle server errors for demo
 		} finally {
 			setUpdatingRoleUserId(null);
 		}
@@ -156,7 +154,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			toast.success('Участник исключён из команды');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось исключить участника';
-			// Silently handle server errors for demo
 		} finally {
 			setRemovingMemberUserId(null);
 		}
@@ -184,7 +181,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			toast.success('Название команды обновлено');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось переименовать команду';
-			// Silently handle server errors for demo
 		} finally {
 			setSavingName(false);
 		}
@@ -208,7 +204,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			navigate('/app/teams', { replace: true });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось удалить команду';
-			// Silently handle server errors for demo
 		} finally {
 			setDeleting(false);
 		}
@@ -232,7 +227,6 @@ export function useTeamMembers({ teamId, initialTeamName = '' }: UseTeamMembersP
 			navigate('/app/teams', { replace: true });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось выти из команды';
-			// Silently handle server errors for demo
 		} finally {
 			setDeleting(false);
 		}

@@ -54,7 +54,6 @@ export function useRoadmapGoal({ selectedRoadmap, updateRoadmapGoalInList }: Use
       toast.success('Цель обновлена');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось обновить цель';
-      // Silently handle server errors for demo
     } finally {
       setIsSavingGoal(false);
     }

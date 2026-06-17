@@ -36,7 +36,6 @@ export function useTeamRoadmaps({ teamId }: UseTeamRoadmapsParams) {
 			setTeamRoadmaps(sortRoadmaps(response.roadmaps));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить роудмапы команды';
-			// Silently handle server errors for demo
 		} finally {
 			setIsLoadingTeamRoadmaps(false);
 		}
@@ -118,7 +117,6 @@ export function useTeamRoadmaps({ teamId }: UseTeamRoadmapsParams) {
 			setTeamTasksCache((prev) => ({ ...prev, [roadmapId]: sortTasks(tasks) }));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить задачи роудмапа';
-			// Silently handle server errors for demo
 		} finally {
 			setIsLoadingTeamRoadmapTasks(false);
 		}
@@ -140,7 +138,6 @@ export function useTeamRoadmaps({ teamId }: UseTeamRoadmapsParams) {
 			updateCachedTeamTask(selectedTeamRoadmapId, updated);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось обновить статус задачи';
-			// Silently handle server errors for demo
 		} finally {
 			setTeamTaskBusy(task.task_id, false);
 		}
@@ -153,7 +150,6 @@ export function useTeamRoadmaps({ teamId }: UseTeamRoadmapsParams) {
 			toast.success(`Роудмап успешно скопирован в ваш аккаунт #${copied.roadmap_id}`);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось скопировать роудмап';
-			// Silently handle server errors for demo
 		} finally {
 			setIsCopyingRoadmap(false);
 		}
@@ -195,7 +191,6 @@ export function useTeamRoadmaps({ teamId }: UseTeamRoadmapsParams) {
 			toast.success('Роудмап удален из команды');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось удалить командный роудмап';
-			// Silently handle server errors for demo
 		} finally {
 			setIsDeletingTeamRoadmap(false);
 		}

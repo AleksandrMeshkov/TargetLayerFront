@@ -50,7 +50,6 @@ export function useSearchInviteTeams() {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить список команд';
 			setTeamsError(message);
-			// Silently handle server errors for demo
 		} finally {
 			setTeamsLoading(false);
 		}
@@ -87,7 +86,6 @@ export function useSearchInviteTeams() {
 			setSelectedUser(null);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось отправить приглашение';
-			// Silently handle server errors for demo
 		} finally {
 			setInvitingTeamId(null);
 		}

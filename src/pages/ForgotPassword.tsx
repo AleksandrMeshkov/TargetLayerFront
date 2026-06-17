@@ -26,7 +26,7 @@ export default function ForgotPassword() {
       toast.success(response.message || 'Письмо для восстановления отправлено');
       navigate('/login', { replace: true });
     } catch (error) {
-      // Silently handle server errors for demo
+      
     }
   };
 

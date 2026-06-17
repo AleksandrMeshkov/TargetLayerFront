@@ -21,7 +21,6 @@ export function useTeams() {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Не удалось загрузить команды';
 			setError(message);
-			// Silently handle server errors for demo
 		} finally {
 			setLoading(false);
 		}
@@ -48,7 +47,6 @@ export function useTeams() {
 			setTeamName('');
 			toast.success('Команда успешно создана');
 		} catch (err) {
-			// Silently handle server errors for demo
 		} finally {
 			setCreating(false);
 		}

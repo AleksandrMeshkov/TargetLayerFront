@@ -118,7 +118,6 @@ export function useRoadmapModals({ onRoadmapCreated }: UseRoadmapModalsArgs) {
       resetCreateRoadmapForm();
       toast.success('Роудмап создан');
     } catch (error) {
-      // Silently handle server errors for demo
     } finally {
       setIsCreatingRoadmap(false);
     }

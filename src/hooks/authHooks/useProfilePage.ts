@@ -56,7 +56,6 @@ export function useProfilePage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ошибка загрузки профиля';
       setError(message);
-      // Silently handle server errors for demo
     } finally {
       setLoading(false);
     }
@@ -102,7 +101,6 @@ export function useProfilePage() {
       toast.success('ФИО успешно обновлено');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ошибка обновления ФИО';
-      // Silently handle server errors for demo
     } finally {
       setSavingName(false);
     }
@@ -137,7 +135,6 @@ export function useProfilePage() {
       toast.success('Фото успешно загружено');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ошибка загрузки фото';
-      // Silently handle server errors for demo
     } finally {
       setUploading(false);
       if (fileInputRef.current) {

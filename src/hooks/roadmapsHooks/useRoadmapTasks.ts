@@ -72,7 +72,6 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
         if (isCancelled) {
           return;
         }
-        // Silently handle server errors for demo
       })
       .finally(() => {
         if (!isCancelled) {
@@ -120,7 +119,6 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
       toast.success('Задача создана');
       return true;
     } catch (error) {
-      // Silently handle server errors for demo
       return false;
     } finally {
       setIsCreatingTask(false);
@@ -169,7 +167,6 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
       toast.success('Задача обновлена');
       cancelEditTask();
     } catch (error) {
-      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }
@@ -198,7 +195,6 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
 
       toast.success('Задача удалена');
     } catch (error) {
-      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }
@@ -219,7 +215,6 @@ export function useRoadmapTasks({ selectedRoadmapId, selectedRoadmap }: UseRoadm
         ))),
       }));
     } catch (error) {
-      // Silently handle server errors for demo
     } finally {
       setTaskBusy(task.task_id, false);
     }

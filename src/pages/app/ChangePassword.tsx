@@ -59,7 +59,6 @@ const ChangePassword: React.FC = () => {
 			toast.success('Пароль успешно изменен');
 			navigate('/app/profile');
 		} catch (err) {
-			// Silently handle server errors for demo
 		} finally {
 			setSubmitting(false);
 		}
